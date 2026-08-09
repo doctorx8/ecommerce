@@ -10,7 +10,7 @@ OpenCart-inspired ecommerce app with:
 ## Quick deploy (anywhere with Docker)
 
 ```bash
-docker compose up -d --build
+docker compose up -d
 ```
 
 Open: **http://localhost:8080**
@@ -18,6 +18,16 @@ Open: **http://localhost:8080**
 That starts:
 - MySQL
 - App (API + UI in one container)
+
+### Hostinger Docker Manager
+
+Hostinger only **pulls** images (it does not build your Dockerfile).
+
+1. Wait for GitHub Action **Publish Docker image** to finish on `main`
+2. Make the package public: GitHub → **Packages** → `ecommerce` → **Package settings** → Change visibility → **Public**
+3. In Hostinger Docker Manager, redeploy using this repo’s `docker-compose.yml`
+
+Image used: `ghcr.io/doctorx8/ecommerce:latest`
 
 ## Local package (single JAR)
 

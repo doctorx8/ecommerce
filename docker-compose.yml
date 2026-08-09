@@ -20,7 +20,8 @@ services:
       retries: 30
 
   app:
-    build: .
+    # Prebuilt image for Hostinger Docker Manager (it does not build Dockerfiles).
+    image: ghcr.io/doctorx8/ecommerce:latest
     container_name: northline-app
     restart: unless-stopped
     depends_on:
