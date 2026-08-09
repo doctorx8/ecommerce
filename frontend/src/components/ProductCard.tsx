@@ -11,7 +11,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
     >
       <ProductMedia product={product} />
       <div className="product-meta">
-        <div className="brand-line">{product.manufacturer?.name ?? 'Northline'}</div>
+        <div className="brand-line">{product.manufacturer?.name ?? 'Karwan'}</div>
         <h3>{product.name}</h3>
         <div className="price-row">
           <span className="price">{money(product.price)}</span>

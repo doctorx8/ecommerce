@@ -9,7 +9,7 @@ export function Layout() {
       <header className="site-header">
         <div className="container nav">
           <Link to="/" className="brand">
-            NORTH<span>LINE</span>
+            KAR<span>WAN</span>
           </Link>
           <nav className="nav-links">
             <NavLink to="/shop">Shop</NavLink>
@@ -38,12 +38,12 @@ export function Layout() {
       <footer className="site-footer">
         <div className="container footer-row">
           <div>
-            <strong className="brand">NORTH<span>LINE</span></strong>
+            <strong className="brand">KAR<span>WAN</span></strong>
             <p className="muted" style={{ margin: '0.4rem 0 0' }}>
               Precision electronics, shipped with care.
             </p>
           </div>
-          <div>© {new Date().getFullYear()} Northline Store</div>
+          <div>© {new Date().getFullYear()} Karwan Store</div>
         </div>
       </footer>
     </div>

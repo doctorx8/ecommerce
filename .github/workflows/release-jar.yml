@@ -43,15 +43,14 @@ jobs:
           cp -R frontend/dist/. backend/src/main/resources/static/
           cd backend
           mvn -B -DskipTests package
-          cp target/store-api-1.0.0.jar ../northline-store.jar
+          cp target/store-api-1.0.0.jar ../karwan-store.jar
 
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest-deploy
-          name: Latest deploy
-          files: northline-store.jar
+          name: Karwan latest deploy
+          files: karwan-store.jar
           make_latest: true
           body: |
-            Auto-built Northline store JAR (API + UI) for Hostinger / Docker Compose deploy.
-          hard_fail: true
+            Auto-built Karwan store JAR (API + UI) for Hostinger / Docker Compose deploy.

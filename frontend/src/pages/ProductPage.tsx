@@ -58,7 +58,7 @@ export function ProductPage() {
       <div className="container pdp">
         <ProductMedia product={product} className="pdp-media" />
         <div className="pdp-info">
-          <div className="brand-line muted">{product.manufacturer?.name ?? 'Northline'}</div>
+          <div className="brand-line muted">{product.manufacturer?.name ?? 'Karwan'}</div>
           <h1>{product.name}</h1>
           <div className="price-row" style={{ marginBottom: '1rem' }}>
             <span className="price" style={{ fontSize: '1.4rem' }}>

@@ -1,7 +1,7 @@
 services:
   mysql:
     image: mysql:8.4
-    container_name: northline-mysql
+    container_name: karwan-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
@@ -23,7 +23,7 @@ services:
   # So we run the official JRE image and download the release JAR on start.
   app:
     image: eclipse-temurin:21-jre-jammy
-    container_name: northline-app
+    container_name: karwan-app
     restart: unless-stopped
     depends_on:
       mysql:
@@ -36,7 +36,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ecommerce
       APP_JWT_SECRET: change-me-to-a-long-random-secret-at-least-32-chars
       SERVER_PORT: 8080
-      JAR_URL: https://github.com/doctorx8/ecommerce/releases/latest/download/northline-store.jar
+      JAR_URL: https://github.com/doctorx8/ecommerce/releases/latest/download/karwan-store.jar
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
@@ -44,8 +44,8 @@ services:
         apt-get update -qq
         apt-get install -y -qq curl ca-certificates
         echo "Downloading app jar..."
-        curl -fsSL "$${JAR_URL}" -o /tmp/northline-store.jar
-        exec java -jar /tmp/northline-store.jar
+        curl -fsSL "$${JAR_URL}" -o /tmp/karwan-store.jar
+        exec java -jar /tmp/karwan-store.jar
 
 volumes:
   mysql_data:

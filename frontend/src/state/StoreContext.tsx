@@ -26,7 +26,7 @@ const StoreContext = createContext<StoreContextValue | null>(null)
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<Cart | null>(null)
   const [user, setUserState] = useState<User | null>(() => {
-    const raw = localStorage.getItem('northline_user')
+    const raw = localStorage.getItem('karwan_user')
     return raw ? (JSON.parse(raw) as User) : null
   })
   const [loading, setLoading] = useState(true)
@@ -54,10 +54,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const setUser = useCallback((next: User | null, token?: string | null) => {
     setUserState(next)
-    if (next) localStorage.setItem('northline_user', JSON.stringify(next))
-    else localStorage.removeItem('northline_user')
-    if (token) localStorage.setItem('northline_token', token)
-    if (token === null) localStorage.removeItem('northline_token')
+    if (next) localStorage.setItem('karwan_user', JSON.stringify(next))
+    else localStorage.removeItem('karwan_user')
+    if (token) localStorage.setItem('karwan_token', token)
+    if (token === null) localStorage.removeItem('karwan_token')
   }, [])
 
   const logout = useCallback(() => {

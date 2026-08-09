@@ -67,7 +67,7 @@ function createId(): string {
 }
 
 function sessionId(): string {
-  const key = 'northline_session'
+  const key = 'karwan_session'
   let id = localStorage.getItem(key)
   if (!id) {
     id = `guest-${createId()}`
@@ -77,7 +77,7 @@ function sessionId(): string {
 }
 
 function authHeaders(): HeadersInit {
-  const token = localStorage.getItem('northline_token')
+  const token = localStorage.getItem('karwan_token')
   return token ? { Authorization: `Bearer ${token}` } : {}
 }
 

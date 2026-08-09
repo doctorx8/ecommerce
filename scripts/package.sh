@@ -21,12 +21,12 @@ mvn -q -DskipTests package
 
 OUT="$ROOT/dist"
 mkdir -p "$OUT"
-cp "$ROOT/backend/target/store-api-1.0.0.jar" "$OUT/northline-store.jar"
+cp "$ROOT/backend/target/store-api-1.0.0.jar" "$OUT/karwan-store.jar"
 
 echo ""
-echo "Package ready: $OUT/northline-store.jar"
+echo "Package ready: $OUT/karwan-store.jar"
 echo "Run with MySQL available:"
-echo "  java -jar dist/northline-store.jar"
+echo "  java -jar dist/karwan-store.jar"
 echo ""
 echo "Or deploy everywhere with Docker:"
 echo "  docker compose up -d --build"

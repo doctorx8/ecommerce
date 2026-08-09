@@ -33,7 +33,7 @@ export function ShopPage() {
     <div className="page">
       <div className="container">
         <h1 className="page-title">Shop</h1>
-        <p className="muted">Browse the full Northline catalog.</p>
+        <p className="muted">Browse the full Karwan catalog.</p>
 
         <div className="toolbar">
           <input

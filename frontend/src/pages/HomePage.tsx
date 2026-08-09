@@ -16,7 +16,7 @@ export function HomePage() {
         <div className="hero-media" aria-hidden="true" />
         <div className="hero-veil" aria-hidden="true" />
         <div className="container hero-copy">
-          <p className="brand-mark">NORTHLINE</p>
+          <p className="brand-mark">KARWAN</p>
           <h1>Tools that disappear into the work.</h1>
           <p>
             A focused collection of phones, laptops, and sound — chosen for clarity, build, and
@@ -38,7 +38,7 @@ export function HomePage() {
           <div className="section-head">
             <div>
               <h2>Featured now</h2>
-              <p>Current picks from the Northline catalog.</p>
+              <p>Current picks from the Karwan catalog.</p>
             </div>
             <Link className="btn btn-ghost" to="/shop">
               View all

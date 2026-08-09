@@ -24,7 +24,8 @@ public class ApiRootController {
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("status", "ok");
-        body.put("service", "ecommerce-api");
+        body.put("service", "karwan-api");
+        body.put("store", "Karwan");
         body.put("stack", "Java Spring Boot + MySQL");
         body.put("docs", docs);
         return body;
@@ -32,6 +33,6 @@ public class ApiRootController {
 
     @GetMapping("/health")
     public Map<String, String> health() {
-        return Map.of("status", "ok", "service", "ecommerce-api");
+        return Map.of("status", "ok", "service", "karwan-api", "store", "Karwan");
     }
 }

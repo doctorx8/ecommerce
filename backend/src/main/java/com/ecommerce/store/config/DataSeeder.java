@@ -25,6 +25,8 @@ public class DataSeeder {
             SettingRepository settingRepository,
             PasswordEncoder passwordEncoder) {
         return args -> {
+            upsertSetting(settingRepository, "store_name", "Karwan");
+
             if (adminUserRepository.count() > 0) {
                 return;
             }
@@ -118,10 +120,17 @@ public class DataSeeder {
             coupon.setActive(true);
             couponRepository.save(coupon);
 
-            saveSetting(settingRepository, "store_name", "Demo Store");
-            saveSetting(settingRepository, "store_currency", "USD");
-            saveSetting(settingRepository, "store_email", "support@store.local");
+            upsertSetting(settingRepository, "store_currency", "USD");
+            upsertSetting(settingRepository, "store_email", "support@store.local");
         };
+    }
+
+    private static void upsertSetting(SettingRepository repo, String key, String value) {
+        Setting setting = repo.findByKeyName(key).orElseGet(Setting::new);
+        setting.setKeyName(key);
+        setting.setValue(value);
+        setting.setGroup("config");
+        repo.save(setting);
     }
 
     private static Manufacturer manufacturer(String name, String slug, int sort) {
@@ -179,11 +188,4 @@ public class DataSeeder {
         return value;
     }
 
-    private static void saveSetting(SettingRepository repo, String key, String value) {
-        Setting setting = new Setting();
-        setting.setKeyName(key);
-        setting.setValue(value);
-        setting.setGroup("config");
-        repo.save(setting);
-    }
 }
