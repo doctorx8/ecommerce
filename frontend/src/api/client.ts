@@ -54,11 +54,23 @@ export type Order = {
   createdAt?: string
 }
 
+function createId(): string {
+  // crypto.randomUUID() is missing on non-HTTPS origins (e.g. http://VPS_IP).
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
 function sessionId(): string {
   const key = 'northline_session'
   let id = localStorage.getItem(key)
   if (!id) {
-    id = `guest-${crypto.randomUUID()}`
+    id = `guest-${createId()}`
     localStorage.setItem(key, id)
   }
   return id
