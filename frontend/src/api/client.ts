@@ -1,0 +1,142 @@
+const API_BASE = import.meta.env.VITE_API_BASE ?? '/api'
+
+export type Product = {
+  id: number
+  name: string
+  slug: string
+  sku: string
+  model?: string
+  description?: string
+  shortDesc?: string
+  price: number | string
+  compareAtPrice?: number | string | null
+  quantity: number
+  stockStatus: string
+  isFeatured?: boolean
+  manufacturer?: { id: number; name: string; slug: string } | null
+  images?: { id: number; image: string; alt?: string }[]
+  categories?: { id: number; name: string; slug: string }[]
+  options?: {
+    id: number
+    name: string
+    required: boolean
+    values: { id: number; name: string; priceModifier: number | string }[]
+  }[]
+}
+
+export type Category = {
+  id: number
+  name: string
+  slug: string
+  description?: string
+  children?: Category[]
+}
+
+export type Cart = {
+  items: {
+    id: number
+    quantity: number
+    product: Product
+  }[]
+  itemCount: number
+  subtotal: number | string
+}
+
+export type Order = {
+  id: number
+  orderNumber: string
+  status: string
+  total: number | string
+  subtotal: number | string
+  discountTotal: number | string
+  shippingCost: number | string
+  items: { id: number; name: string; quantity: number; price: number | string; total: number | string }[]
+  createdAt?: string
+}
+
+function sessionId(): string {
+  const key = 'northline_session'
+  let id = localStorage.getItem(key)
+  if (!id) {
+    id = `guest-${crypto.randomUUID()}`
+    localStorage.setItem(key, id)
+  }
+  return id
+}
+
+function authHeaders(): HeadersInit {
+  const token = localStorage.getItem('northline_token')
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...authHeaders(),
+    ...(init.headers || {}),
+  }
+  const res = await fetch(`${API_BASE}${path}`, { ...init, headers })
+  if (res.status === 204) return undefined as T
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    throw new Error(data.error || `Request failed (${res.status})`)
+  }
+  return data as T
+}
+
+export const api = {
+  sessionId,
+  getProducts: (params: Record<string, string | number | boolean | undefined> = {}) => {
+    const qs = new URLSearchParams()
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== '') qs.set(k, String(v))
+    })
+    const q = qs.toString()
+    return request<{ items: Product[]; total: number; page: number; totalPages: number }>(
+      `/products${q ? `?${q}` : ''}`,
+    )
+  },
+  getProduct: (idOrSlug: string) => request<Product>(`/products/${idOrSlug}`),
+  getCategories: () => request<Category[]>('/categories?tree=true'),
+  login: (email: string, password: string) =>
+    request<{ token: string; customer: { id: number; email: string; firstName: string; lastName: string } }>(
+      '/auth/login',
+      { method: 'POST', body: JSON.stringify({ email, password }) },
+    ),
+  register: (payload: {
+    email: string
+    password: string
+    firstName: string
+    lastName: string
+    telephone?: string
+  }) =>
+    request<{ token: string; customer: { id: number; email: string; firstName: string; lastName: string } }>(
+      '/auth/register',
+      { method: 'POST', body: JSON.stringify(payload) },
+    ),
+  me: () => request<Record<string, unknown>>('/auth/me'),
+  getCart: () => request<Cart>(`/cart?sessionId=${sessionId()}`),
+  addToCart: (productId: number, quantity = 1) =>
+    request<Cart>('/cart', {
+      method: 'POST',
+      body: JSON.stringify({ productId, quantity, sessionId: sessionId() }),
+    }),
+  updateCartItem: (id: number, quantity: number) =>
+    request<Cart>(`/cart/${id}?sessionId=${sessionId()}`, {
+      method: 'PUT',
+      body: JSON.stringify({ quantity }),
+    }),
+  removeCartItem: (id: number) =>
+    request<Cart>(`/cart/${id}?sessionId=${sessionId()}`, { method: 'DELETE' }),
+  checkout: (payload: Record<string, unknown>) =>
+    request<Order>('/orders/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ ...payload, sessionId: sessionId() }),
+    }),
+  myOrders: () => request<Order[]>('/orders/mine'),
+}
+
+export function money(value: number | string | undefined | null): string {
+  const n = Number(value ?? 0)
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
+}
