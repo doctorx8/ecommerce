@@ -19,9 +19,10 @@ services:
       timeout: 5s
       retries: 30
 
+  # Hostinger Docker Manager can pull public Docker Hub images, but GHCR often stays private.
+  # So we run the official JRE image and download the release JAR on start.
   app:
-    # Prebuilt image for Hostinger Docker Manager (it does not build Dockerfiles).
-    image: ghcr.io/doctorx8/ecommerce:latest
+    image: eclipse-temurin:21-jre-jammy
     container_name: northline-app
     restart: unless-stopped
     depends_on:
@@ -35,6 +36,16 @@ services:
       SPRING_DATASOURCE_PASSWORD: ecommerce
       APP_JWT_SECRET: change-me-to-a-long-random-secret-at-least-32-chars
       SERVER_PORT: 8080
+      JAR_URL: https://github.com/doctorx8/ecommerce/releases/latest/download/northline-store.jar
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -euo pipefail
+        apt-get update -qq
+        apt-get install -y -qq curl ca-certificates
+        echo "Downloading app jar..."
+        curl -fsSL "$${JAR_URL}" -o /tmp/northline-store.jar
+        exec java -jar /tmp/northline-store.jar
 
 volumes:
   mysql_data:

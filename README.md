@@ -21,13 +21,13 @@ That starts:
 
 ### Hostinger Docker Manager
 
-Hostinger only **pulls** images (it does not build your Dockerfile).
+Hostinger only pulls public Docker Hub images reliably (GHCR often stays private).
 
-1. Wait for GitHub Action **Publish Docker image** to finish on `main`
-2. Make the package public: GitHub → **Packages** → `ecommerce` → **Package settings** → Change visibility → **Public**
-3. In Hostinger Docker Manager, redeploy using this repo’s `docker-compose.yml`
+1. Wait for GitHub Action **Release app JAR** to finish on `main`
+2. Confirm the file exists: https://github.com/doctorx8/ecommerce/releases/latest
+3. In Hostinger Docker Manager, redeploy this repo’s `docker-compose.yml`
 
-Image used: `ghcr.io/doctorx8/ecommerce:latest`
+Compose pulls `mysql:8.4` + `eclipse-temurin:21-jre-jammy`, then downloads `northline-store.jar` from GitHub Releases.
 
 ## Local package (single JAR)
 
