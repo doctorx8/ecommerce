@@ -1,11 +1,15 @@
 package com.ecommerce.store.service;
 
 import com.ecommerce.store.config.ApiException;
+import com.ecommerce.store.dto.AccountDtos.ChangePasswordRequest;
+import com.ecommerce.store.dto.AccountDtos.DeleteAccountRequest;
+import com.ecommerce.store.dto.AccountDtos.UpdateProfileRequest;
 import com.ecommerce.store.dto.AuthDtos.LoginRequest;
 import com.ecommerce.store.dto.AuthDtos.RegisterRequest;
 import com.ecommerce.store.entity.AdminUser;
 import com.ecommerce.store.entity.Customer;
 import com.ecommerce.store.repository.AdminUserRepository;
+import com.ecommerce.store.repository.CartItemRepository;
 import com.ecommerce.store.repository.CustomerRepository;
 import com.ecommerce.store.security.AuthUser;
 import com.ecommerce.store.security.JwtService;
@@ -21,16 +25,19 @@ public class AuthService {
 
     private final CustomerRepository customerRepository;
     private final AdminUserRepository adminUserRepository;
+    private final CartItemRepository cartItemRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
     public AuthService(
             CustomerRepository customerRepository,
             AdminUserRepository adminUserRepository,
+            CartItemRepository cartItemRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService) {
         this.customerRepository = customerRepository;
         this.adminUserRepository = adminUserRepository;
+        this.cartItemRepository = cartItemRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
     }
@@ -82,8 +89,60 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public Map<String, Object> me(Long customerId) {
-        Customer customer = customerRepository.findById(customerId)
+        Customer customer = requireActiveCustomer(customerId);
+        return toFullCustomerMap(customer);
+    }
+
+    @Transactional
+    public Map<String, Object> updateProfile(Long customerId, UpdateProfileRequest req) {
+        Customer customer = requireActiveCustomer(customerId);
+        if (!customer.getEmail().equalsIgnoreCase(req.email())
+                && customerRepository.existsByEmail(req.email())) {
+            throw new ApiException("Email already registered", HttpStatus.CONFLICT);
+        }
+        customer.setEmail(req.email());
+        customer.setFirstName(req.firstName());
+        customer.setLastName(req.lastName());
+        customer.setTelephone(req.telephone());
+        if (req.newsletter() != null) {
+            customer.setNewsletter(req.newsletter());
+        }
+        customerRepository.save(customer);
+        return toFullCustomerMap(customer);
+    }
+
+    @Transactional
+    public void changePassword(Long customerId, ChangePasswordRequest req) {
+        Customer customer = requireActiveCustomer(customerId);
+        if (!passwordEncoder.matches(req.currentPassword(), customer.getPasswordHash())) {
+            throw new ApiException("Current password is incorrect", HttpStatus.BAD_REQUEST);
+        }
+        customer.setPasswordHash(passwordEncoder.encode(req.newPassword()));
+        customerRepository.save(customer);
+    }
+
+    @Transactional
+    public void deleteAccount(Long customerId, DeleteAccountRequest req) {
+        Customer customer = requireActiveCustomer(customerId);
+        if (!passwordEncoder.matches(req.password(), customer.getPasswordHash())) {
+            throw new ApiException("Password is incorrect", HttpStatus.BAD_REQUEST);
+        }
+        cartItemRepository.deleteByCustomerId(customerId);
+        customer.setActive(false);
+        customer.setEmail("deleted+" + customer.getId() + "@karwan.local");
+        customer.setPasswordHash(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
+        customer.setTelephone(null);
+        customer.setNewsletter(false);
+        customerRepository.save(customer);
+    }
+
+    private Customer requireActiveCustomer(Long customerId) {
+        return customerRepository.findById(customerId)
+                .filter(Customer::isActive)
                 .orElseThrow(() -> new ApiException("Customer not found", HttpStatus.NOT_FOUND));
+    }
+
+    private Map<String, Object> toFullCustomerMap(Customer customer) {
         Map<String, Object> map = toCustomerMap(customer);
         map.put("newsletter", customer.isNewsletter());
         map.put("createdAt", customer.getCreatedAt());

@@ -1,6 +1,9 @@
 package com.ecommerce.store.controller;
 
 import com.ecommerce.store.config.ApiException;
+import com.ecommerce.store.dto.AccountDtos.ChangePasswordRequest;
+import com.ecommerce.store.dto.AccountDtos.DeleteAccountRequest;
+import com.ecommerce.store.dto.AccountDtos.UpdateProfileRequest;
 import com.ecommerce.store.dto.AuthDtos.LoginRequest;
 import com.ecommerce.store.dto.AuthDtos.RegisterRequest;
 import com.ecommerce.store.security.AuthUser;
@@ -39,9 +42,30 @@ public class AuthController {
 
     @GetMapping("/me")
     public Map<String, Object> me() {
+        return authService.me(currentCustomerId());
+    }
+
+    @PutMapping("/me")
+    public Map<String, Object> updateProfile(@Valid @RequestBody UpdateProfileRequest request) {
+        return authService.updateProfile(currentCustomerId(), request);
+    }
+
+    @PutMapping("/password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        authService.changePassword(currentCustomerId(), request);
+    }
+
+    @DeleteMapping("/me")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteAccount(@Valid @RequestBody DeleteAccountRequest request) {
+        authService.deleteAccount(currentCustomerId(), request);
+    }
+
+    private Long currentCustomerId() {
         AuthUser user = SecurityUtils.currentUser()
                 .filter(AuthUser::isCustomer)
                 .orElseThrow(() -> new ApiException("Customer access required", HttpStatus.FORBIDDEN));
-        return authService.me(user.getId());
+        return user.getId();
     }
 }

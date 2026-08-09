@@ -54,6 +54,31 @@ export type Order = {
   createdAt?: string
 }
 
+export type Address = {
+  id: number
+  firstName: string
+  lastName: string
+  company?: string | null
+  address1: string
+  address2?: string | null
+  city: string
+  postcode: string
+  country: string
+  zone?: string | null
+  isDefault: boolean
+}
+
+export type CustomerProfile = {
+  id: number
+  email: string
+  firstName: string
+  lastName: string
+  telephone?: string | null
+  newsletter?: boolean
+  createdAt?: string
+  addresses?: Address[]
+}
+
 function createId(): string {
   // crypto.randomUUID() is missing on non-HTTPS origins (e.g. http://VPS_IP).
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -126,7 +151,41 @@ export const api = {
       '/auth/register',
       { method: 'POST', body: JSON.stringify(payload) },
     ),
-  me: () => request<Record<string, unknown>>('/auth/me'),
+  me: () => request<CustomerProfile>('/auth/me'),
+  updateProfile: (payload: {
+    email: string
+    firstName: string
+    lastName: string
+    telephone?: string
+    newsletter?: boolean
+  }) =>
+    request<CustomerProfile>('/auth/me', {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<void>('/auth/password', {
+      method: 'PUT',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
+  deleteAccount: (password: string) =>
+    request<void>('/auth/me', {
+      method: 'DELETE',
+      body: JSON.stringify({ password }),
+    }),
+  getAddresses: () => request<Address[]>('/addresses'),
+  createAddress: (payload: Omit<Address, 'id'>) =>
+    request<Address>('/addresses', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  updateAddress: (id: number, payload: Omit<Address, 'id'>) =>
+    request<Address>(`/addresses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  deleteAddress: (id: number) =>
+    request<void>(`/addresses/${id}`, { method: 'DELETE' }),
   getCart: () => request<Cart>(`/cart?sessionId=${sessionId()}`),
   addToCart: (productId: number, quantity = 1) =>
     request<Cart>('/cart', {
