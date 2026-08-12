@@ -9,22 +9,29 @@ OpenCart-inspired ecommerce app with:
 
 ## Quick deploy (anywhere with Docker)
 
+**Hostinger / VPS (uses published release JAR):**
 ```bash
 docker compose up -d
 ```
 
-Open: **http://localhost:8080**
+**Local build (no GitHub release needed):**
+```bash
+docker compose -f docker-compose.local.yml up -d --build
+```
 
-That starts:
-- MySQL
-- App (API + UI in one container)
+Open: **http://localhost:8080**
 
 ### Hostinger Docker Manager
 
-1. Application / project name: **karwan**
-2. Wait for GitHub Action **Release app JAR** to finish on `main`
-3. Confirm: https://github.com/doctorx8/ecommerce/releases/latest
-4. Deploy this repo’s `docker-compose.yml`
+The GitHub repo must be **public** so Hostinger can download the compose file and JAR.
+
+1. Confirm release exists: https://github.com/doctorx8/ecommerce/releases/latest
+2. In Docker Manager, create project from URL (must be the **raw** file):
+   ```
+   https://raw.githubusercontent.com/doctorx8/ecommerce/main/docker-compose.yml
+   ```
+3. Application / project name: **karwan**
+4. After deploy, open `http://YOUR_VPS_IP:8080`
 
 Compose pulls `mysql:8.4` + `eclipse-temurin:21-jre-jammy`, then downloads `karwan-store.jar` from GitHub Releases.
 
@@ -48,11 +55,15 @@ cd backend && mvn spring-boot:run
 cd frontend && npm run dev
 ```
 
-## Demo accounts
+## Admin console
+
+Open **http://localhost:8080/admin** (or `/admin` on your deployed host).
 
 | Role     | Email                 | Password     |
 |----------|-----------------------|--------------|
 | Customer | customer@store.local  | password123  |
 | Admin    | admin@store.local     | password123  |
+
+Admin features: store overview, inventory/stock edits, order & payment status, customers, coupons.
 
 Coupon: `WELCOME10`

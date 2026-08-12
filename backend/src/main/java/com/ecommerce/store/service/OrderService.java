@@ -220,17 +220,27 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public Map<String, Object> listOrders(int page, int limit, OrderStatus status) {
-        PageRequest pageable = PageRequest.of(Math.max(page - 1, 0), Math.min(Math.max(limit, 1), 100));
+        PageRequest pageable = PageRequest.of(
+                Math.max(page - 1, 0),
+                Math.min(Math.max(limit, 1), 100),
+                org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
         Page<Order> result = status != null
                 ? orderRepository.findByStatus(status, pageable)
                 : orderRepository.findAll(pageable);
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("items", result.getContent().stream().map(this::toOrderMap).toList());
+        response.put("items", result.getContent().stream().map(this::toAdminOrderMap).toList());
         response.put("page", page);
         response.put("limit", pageable.getPageSize());
         response.put("total", result.getTotalElements());
         response.put("totalPages", result.getTotalPages());
         return response;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getAdminOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ApiException("Order not found", HttpStatus.NOT_FOUND));
+        return toAdminOrderMap(order);
     }
 
     @Transactional
@@ -283,6 +293,14 @@ public class OrderService {
     }
 
     private Map<String, Object> toOrderMap(Order order) {
+        return toOrderMap(order, false);
+    }
+
+    public Map<String, Object> toAdminOrderMap(Order order) {
+        return toOrderMap(order, true);
+    }
+
+    private Map<String, Object> toOrderMap(Order order, boolean admin) {
         Map<String, Object> map = new LinkedHashMap<>();
         map.put("id", order.getId());
         map.put("orderNumber", order.getOrderNumber());
@@ -291,6 +309,7 @@ public class OrderService {
         map.put("paymentMethod", order.getPaymentMethod());
         map.put("shippingMethod", order.getShippingMethod());
         map.put("email", order.getEmail());
+        map.put("telephone", order.getTelephone());
         map.put("firstName", order.getFirstName());
         map.put("lastName", order.getLastName());
         map.put("subtotal", order.getSubtotal());
@@ -299,6 +318,7 @@ public class OrderService {
         map.put("taxTotal", order.getTaxTotal());
         map.put("total", order.getTotal());
         map.put("currency", order.getCurrency());
+        map.put("comment", order.getComment());
         map.put("createdAt", order.getCreatedAt());
         map.put("items", order.getItems().stream().map(item -> {
             Map<String, Object> im = new LinkedHashMap<>();
@@ -319,6 +339,31 @@ public class OrderService {
             hm.put("createdAt", h.getCreatedAt());
             return hm;
         }).toList());
+        if (admin) {
+            map.put("customerId", order.getCustomer() != null ? order.getCustomer().getId() : null);
+            map.put("shipping", Map.of(
+                    "firstName", order.getShippingFirstName(),
+                    "lastName", order.getShippingLastName(),
+                    "company", order.getShippingCompany() != null ? order.getShippingCompany() : "",
+                    "address1", order.getShippingAddress1(),
+                    "address2", order.getShippingAddress2() != null ? order.getShippingAddress2() : "",
+                    "city", order.getShippingCity(),
+                    "postcode", order.getShippingPostcode(),
+                    "country", order.getShippingCountry(),
+                    "zone", order.getShippingZone() != null ? order.getShippingZone() : ""
+            ));
+            map.put("billing", Map.of(
+                    "firstName", order.getBillingFirstName(),
+                    "lastName", order.getBillingLastName(),
+                    "company", order.getBillingCompany() != null ? order.getBillingCompany() : "",
+                    "address1", order.getBillingAddress1(),
+                    "address2", order.getBillingAddress2() != null ? order.getBillingAddress2() : "",
+                    "city", order.getBillingCity(),
+                    "postcode", order.getBillingPostcode(),
+                    "country", order.getBillingCountry(),
+                    "zone", order.getBillingZone() != null ? order.getBillingZone() : ""
+            ));
+        }
         return map;
     }
 }

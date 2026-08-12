@@ -1,0 +1,140 @@
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { adminApi, formatDate, money, type AdminOverview } from './adminApi'
+
+export function AdminDashboardPage() {
+  const [data, setData] = useState<AdminOverview | null>(null)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    adminApi
+      .overview()
+      .then(setData)
+      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load'))
+  }, [])
+
+  if (error) return <div className="admin-error">{error}</div>
+  if (!data) return <div className="admin-muted">Loading overview…</div>
+
+  const stats = [
+    { label: 'Revenue', value: money(data.revenue) },
+    { label: 'Orders', value: String(data.orders) },
+    { label: 'Products', value: `${data.activeProducts}/${data.products}` },
+    { label: 'Low stock', value: String(data.lowStock) },
+    { label: 'Customers', value: String(data.customers) },
+    { label: 'Coupons', value: String(data.coupons) },
+  ]
+
+  return (
+    <div className="admin-page">
+      <header className="admin-page-head">
+        <div>
+          <h1>Overview</h1>
+          <p className="admin-muted">Store health, stock alerts, and recent packages.</p>
+        </div>
+      </header>
+
+      <div className="admin-stat-grid">
+        {stats.map((s) => (
+          <div key={s.label} className="admin-stat">
+            <span>{s.label}</span>
+            <strong>{s.value}</strong>
+          </div>
+        ))}
+      </div>
+
+      <div className="admin-split">
+        <section className="admin-panel">
+          <div className="admin-panel-head">
+            <h2>Orders by status</h2>
+          </div>
+          <div className="admin-status-bars">
+            {Object.entries(data.ordersByStatus).map(([status, count]) => (
+              <div key={status} className="admin-status-row">
+                <span>{status}</span>
+                <div className="admin-bar-track">
+                  <div
+                    className="admin-bar-fill"
+                    style={{
+                      width: `${data.orders ? Math.max((count / data.orders) * 100, count ? 6 : 0) : 0}%`,
+                    }}
+                  />
+                </div>
+                <strong>{count}</strong>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="admin-panel">
+          <div className="admin-panel-head">
+            <h2>Low stock</h2>
+            <Link to="/admin/products?lowStock=1">Manage</Link>
+          </div>
+          {data.lowStockProducts.length === 0 ? (
+            <p className="admin-muted">All active products look healthy.</p>
+          ) : (
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>SKU</th>
+                  <th>Qty</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.lowStockProducts.map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.name}</td>
+                    <td>{p.sku}</td>
+                    <td>
+                      <span className={p.quantity <= 0 ? 'badge bad' : 'badge warn'}>{p.quantity}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      </div>
+
+      <section className="admin-panel">
+        <div className="admin-panel-head">
+          <h2>Recent orders</h2>
+          <Link to="/admin/orders">View all</Link>
+        </div>
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Status</th>
+              <th>Payment</th>
+              <th>Total</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.recentOrders.map((o) => (
+              <tr key={o.id}>
+                <td>
+                  <Link to={`/admin/orders?focus=${o.id}`}>{o.orderNumber}</Link>
+                </td>
+                <td>
+                  {o.firstName} {o.lastName}
+                  <div className="admin-muted">{o.email}</div>
+                </td>
+                <td>
+                  <span className={`badge status-${o.status.toLowerCase()}`}>{o.status}</span>
+                </td>
+                <td>{o.paymentStatus}</td>
+                <td>{money(o.total)}</td>
+                <td>{formatDate(o.createdAt)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+    </div>
+  )
+}
