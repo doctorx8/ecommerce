@@ -1,0 +1,833 @@
+{
+  "info": {
+    "_postman_id": "karwan-api-collection-001",
+    "name": "Karwan Store API",
+    "description": "Karwan ecommerce API collection with login token generators and end-to-end workflows.\n\n## Quick start\n1. Import this collection + an environment.\n2. Run **01 Token Generators → Customer Login** (or Admin Login).\n3. Tokens are saved automatically to `customer_token` / `admin_token`.\n4. Follow folders in order for full workflows.\n\n## Demo accounts\n- Customer: `customer@store.local` / `password123`\n- Admin: `admin@store.local` / `password123`\n- Coupon: `WELCOME10`",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080/api" },
+    { "key": "customer_email", "value": "customer@store.local" },
+    { "key": "customer_password", "value": "password123" },
+    { "key": "admin_email", "value": "admin@store.local" },
+    { "key": "admin_password", "value": "password123" },
+    { "key": "customer_token", "value": "" },
+    { "key": "admin_token", "value": "" },
+    { "key": "sessionId", "value": "guest-postman-session-1" },
+    { "key": "productId", "value": "1" },
+    { "key": "productSlug", "value": "" },
+    { "key": "cartItemId", "value": "" },
+    { "key": "orderId", "value": "" },
+    { "key": "addressId", "value": "" },
+    { "key": "couponId", "value": "" },
+    { "key": "couponCode", "value": "WELCOME10" }
+  ],
+  "item": [
+    {
+      "name": "00 Health",
+      "item": [
+        {
+          "name": "API Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/"
+          }
+        },
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 Token Generators",
+      "description": "Run these first. Successful responses store JWTs into collection variables for later requests.",
+      "item": [
+        {
+          "name": "Customer Login → save customer_token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Customer login succeeded', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('customer_token', json.token);",
+                  "  if (pm.environment) { pm.environment.set('customer_token', json.token); }",
+                  "  console.log('customer_token saved');",
+                  "}",
+                  "if (json.customer && json.customer.id) {",
+                  "  pm.collectionVariables.set('customerId', String(json.customer.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customer_email}}\",\n  \"password\": \"{{customer_password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/login",
+            "description": "Generates a customer JWT and stores it as `customer_token`."
+          }
+        },
+        {
+          "name": "Admin Login → save admin_token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Admin login succeeded', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('admin_token', json.token);",
+                  "  if (pm.environment) { pm.environment.set('admin_token', json.token); }",
+                  "  console.log('admin_token saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/admin/login",
+            "description": "Generates an admin JWT and stores it as `admin_token`."
+          }
+        },
+        {
+          "name": "Register Customer → save customer_token",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const stamp = Date.now();",
+                  "pm.collectionVariables.set('register_email', `buyer.${stamp}@example.com`);",
+                  "pm.collectionVariables.set('register_password', 'password123');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Register succeeded', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('customer_token', json.token);",
+                  "  if (pm.environment) { pm.environment.set('customer_token', json.token); }",
+                  "}",
+                  "if (json.customer) {",
+                  "  pm.collectionVariables.set('customer_email', json.customer.email);",
+                  "  pm.collectionVariables.set('customerId', String(json.customer.id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{register_email}}\",\n  \"password\": \"{{register_password}}\",\n  \"firstName\": \"Postman\",\n  \"lastName\": \"Buyer\",\n  \"telephone\": \"+10000000000\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/register",
+            "description": "Creates a new customer and stores the returned JWT as `customer_token`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 Catalog (public)",
+      "item": [
+        {
+          "name": "List Categories (tree)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/categories?tree=true"
+          }
+        },
+        {
+          "name": "List Manufacturers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/manufacturers"
+          }
+        },
+        {
+          "name": "List Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.items && json.items.length) {",
+                  "  pm.collectionVariables.set('productId', String(json.items[0].id));",
+                  "  pm.collectionVariables.set('productSlug', json.items[0].slug);",
+                  "  console.log('Saved productId=', json.items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/products?page=1&limit=20&sort=newest",
+              "host": ["{{baseUrl}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" },
+                { "key": "sort", "value": "newest" },
+                { "key": "search", "value": "", "disabled": true },
+                { "key": "featured", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Product by ID/Slug",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Validate Coupon",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/coupons/validate/{{couponCode}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 Guest Shop Workflow",
+      "description": "Guest browse → cart → checkout. No customer token required. Uses `sessionId`.",
+      "item": [
+        {
+          "name": "1. Browse Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.items && json.items.length) {",
+                  "  pm.collectionVariables.set('productId', String(json.items[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products?page=1&limit=10"
+          }
+        },
+        {
+          "name": "2. Add to Cart",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Item added', function () { pm.response.to.have.status(201); });",
+                  "const json = pm.response.json();",
+                  "if (json.items && json.items.length) {",
+                  "  pm.collectionVariables.set('cartItemId', String(json.items[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 1,\n  \"sessionId\": \"{{sessionId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "3. Get Cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/cart?sessionId={{sessionId}}"
+          }
+        },
+        {
+          "name": "4. Update Cart Item Qty",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 2\n}"
+            },
+            "url": "{{baseUrl}}/cart/{{cartItemId}}?sessionId={{sessionId}}"
+          }
+        },
+        {
+          "name": "5. Checkout (guest)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Checkout created order', function () {",
+                  "  pm.expect([200, 201]).to.include(pm.response.code);",
+                  "});",
+                  "const json = pm.response.json();",
+                  "if (json.id) {",
+                  "  pm.collectionVariables.set('orderId', String(json.id));",
+                  "  console.log('orderId=', json.id, json.orderNumber);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sessionId\": \"{{sessionId}}\",\n  \"email\": \"guest.buyer@example.com\",\n  \"telephone\": \"+15551234567\",\n  \"firstName\": \"Guest\",\n  \"lastName\": \"Buyer\",\n  \"paymentMethod\": \"cod\",\n  \"shippingMethod\": \"standard\",\n  \"shippingCost\": 9.99,\n  \"couponCode\": \"{{couponCode}}\",\n  \"comment\": \"Postman guest checkout\",\n  \"shipping\": {\n    \"firstName\": \"Guest\",\n    \"lastName\": \"Buyer\",\n    \"company\": \"\",\n    \"address1\": \"100 Market Street\",\n    \"address2\": \"Apt 2\",\n    \"city\": \"San Francisco\",\n    \"postcode\": \"94105\",\n    \"country\": \"US\",\n    \"zone\": \"CA\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}/orders/checkout"
+          }
+        },
+        {
+          "name": "6. Remove Cart Item",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/cart/{{cartItemId}}?sessionId={{sessionId}}"
+          }
+        },
+        {
+          "name": "7. Clear Cart",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/cart?sessionId={{sessionId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 Customer Account Workflow",
+      "description": "Requires `customer_token` from Token Generators → Customer Login.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{customer_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Get Profile (me)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{customer_email}}\",\n  \"firstName\": \"Demo\",\n  \"lastName\": \"Customer\",\n  \"telephone\": \"+15550001111\",\n  \"newsletter\": true\n}"
+            },
+            "url": "{{baseUrl}}/auth/me"
+          }
+        },
+        {
+          "name": "List Addresses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/addresses"
+          }
+        },
+        {
+          "name": "Create Address",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('addressId', String(json.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Demo\",\n  \"lastName\": \"Customer\",\n  \"company\": \"Karwan\",\n  \"address1\": \"200 Mission St\",\n  \"address2\": \"\",\n  \"city\": \"San Francisco\",\n  \"postcode\": \"94105\",\n  \"country\": \"US\",\n  \"zone\": \"CA\",\n  \"isDefault\": true\n}"
+            },
+            "url": "{{baseUrl}}/addresses"
+          }
+        },
+        {
+          "name": "Update Address",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Demo\",\n  \"lastName\": \"Customer\",\n  \"company\": \"Karwan\",\n  \"address1\": \"200 Mission St\",\n  \"address2\": \"Suite 5\",\n  \"city\": \"San Francisco\",\n  \"postcode\": \"94105\",\n  \"country\": \"US\",\n  \"zone\": \"CA\",\n  \"isDefault\": true\n}"
+            },
+            "url": "{{baseUrl}}/addresses/{{addressId}}"
+          }
+        },
+        {
+          "name": "Delete Address",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/addresses/{{addressId}}"
+          }
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"{{customer_password}}\",\n  \"newPassword\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/password",
+            "description": "Keeps password as password123 for demo convenience. Change carefully on real accounts."
+          }
+        },
+        {
+          "name": "Delete Account (soft) — DANGER",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"{{customer_password}}\"\n}"
+            },
+            "url": "{{baseUrl}}/auth/me",
+            "description": "Soft-deletes the current customer. Do not run against the seeded demo account unless you intend to."
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 Customer Shop Workflow",
+      "description": "Logged-in customer cart + checkout + order history. Run Customer Login first.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{customer_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "1. Pick Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.items && json.items.length) {",
+                  "  pm.collectionVariables.set('productId', String(json.items[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/products?page=1&limit=5"
+          }
+        },
+        {
+          "name": "2. Add to Cart (authenticated)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.items && json.items.length) {",
+                  "  pm.collectionVariables.set('cartItemId', String(json.items[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": {{productId}},\n  \"quantity\": 1\n}"
+            },
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "3. Get My Cart",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/cart"
+          }
+        },
+        {
+          "name": "4. Checkout (customer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('orderId', String(json.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"cod\",\n  \"shippingMethod\": \"standard\",\n  \"shippingCost\": 5.00,\n  \"couponCode\": \"{{couponCode}}\",\n  \"comment\": \"Postman customer checkout\",\n  \"shipping\": {\n    \"firstName\": \"Demo\",\n    \"lastName\": \"Customer\",\n    \"address1\": \"200 Mission St\",\n    \"city\": \"San Francisco\",\n    \"postcode\": \"94105\",\n    \"country\": \"US\",\n    \"zone\": \"CA\"\n  }\n}"
+            },
+            "url": "{{baseUrl}}/orders/checkout"
+          }
+        },
+        {
+          "name": "5. My Orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (Array.isArray(json) && json.length) {",
+                  "  pm.collectionVariables.set('orderId', String(json[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orders/mine"
+          }
+        },
+        {
+          "name": "6. Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/orders/{{orderId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 Admin Workflow",
+      "description": "Requires `admin_token` from Token Generators → Admin Login.",
+      "auth": {
+        "type": "bearer",
+        "bearer": [{ "key": "token", "value": "{{admin_token}}", "type": "string" }]
+      },
+      "item": [
+        {
+          "name": "Overview Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/overview"
+          }
+        },
+        {
+          "name": "List Inventory Products",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.items && json.items.length) {",
+                  "  pm.collectionVariables.set('productId', String(json.items[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/products?page=1&limit=50"
+          }
+        },
+        {
+          "name": "List Low Stock",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/products?lowStock=true"
+          }
+        },
+        {
+          "name": "Update Inventory",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 42,\n  \"stockStatus\": \"IN_STOCK\",\n  \"active\": true\n}"
+            },
+            "url": "{{baseUrl}}/admin/products/{{productId}}/inventory"
+          }
+        },
+        {
+          "name": "List Orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.items && json.items.length) {",
+                  "  pm.collectionVariables.set('orderId', String(json.items[0].id));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/orders?page=1&limit=20"
+          }
+        },
+        {
+          "name": "Get Order Detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/orders/{{orderId}}"
+          }
+        },
+        {
+          "name": "Update Order Status / Payment",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PROCESSING\",\n  \"paymentStatus\": \"PAID\",\n  \"comment\": \"Marked processing via Postman\",\n  \"notifyCustomer\": false\n}"
+            },
+            "url": "{{baseUrl}}/admin/orders/{{orderId}}"
+          }
+        },
+        {
+          "name": "List Customers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/customers?page=1&limit=50"
+          }
+        },
+        {
+          "name": "List Coupons",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (Array.isArray(json) && json.length) {",
+                  "  pm.collectionVariables.set('couponId', String(json[0].id));",
+                  "  pm.collectionVariables.set('couponCode', json[0].code);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/admin/coupons"
+          }
+        },
+        {
+          "name": "Create Coupon",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('newCouponCode', 'PM' + Date.now().toString().slice(-6));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('couponId', String(json.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{newCouponCode}}\",\n  \"name\": \"Postman Test Coupon\",\n  \"type\": \"PERCENT\",\n  \"discount\": 15,\n  \"minOrderTotal\": 20,\n  \"maxUses\": 100,\n  \"active\": true\n}"
+            },
+            "url": "{{baseUrl}}/admin/coupons"
+          }
+        },
+        {
+          "name": "Update Coupon",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"{{newCouponCode}}\",\n  \"name\": \"Postman Test Coupon Updated\",\n  \"type\": \"PERCENT\",\n  \"discount\": 12,\n  \"minOrderTotal\": 25,\n  \"maxUses\": 50,\n  \"active\": true\n}"
+            },
+            "url": "{{baseUrl}}/admin/coupons/{{couponId}}"
+          }
+        },
+        {
+          "name": "Delete Coupon",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/admin/coupons/{{couponId}}"
+          }
+        },
+        {
+          "name": "Create Product (catalog admin)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const stamp = Date.now().toString().slice(-6);",
+                  "pm.collectionVariables.set('newSku', 'PM-SKU-' + stamp);",
+                  "pm.collectionVariables.set('newSlug', 'postman-product-' + stamp);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.id) pm.collectionVariables.set('productId', String(json.id));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Demo Product\",\n  \"slug\": \"{{newSlug}}\",\n  \"sku\": \"{{newSku}}\",\n  \"model\": \"PM-1\",\n  \"description\": \"Created from Postman\",\n  \"shortDesc\": \"Postman item\",\n  \"price\": 49.99,\n  \"compareAtPrice\": 59.99,\n  \"quantity\": 25,\n  \"stockStatus\": \"IN_STOCK\",\n  \"subtractStock\": true,\n  \"active\": true,\n  \"featured\": false\n}"
+            },
+            "url": "{{baseUrl}}/products"
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Demo Product Updated\",\n  \"slug\": \"{{newSlug}}\",\n  \"sku\": \"{{newSku}}\",\n  \"model\": \"PM-1\",\n  \"description\": \"Updated from Postman\",\n  \"shortDesc\": \"Postman item\",\n  \"price\": 44.99,\n  \"quantity\": 30,\n  \"stockStatus\": \"IN_STOCK\",\n  \"subtractStock\": true,\n  \"active\": true,\n  \"featured\": true\n}"
+            },
+            "url": "{{baseUrl}}/products/{{productId}}"
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/products/{{productId}}"
+          }
+        }
+      ]
+    }
+  ]
+}

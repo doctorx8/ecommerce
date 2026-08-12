@@ -66,4 +66,13 @@ Open **http://localhost:8080/admin** (or `/admin` on your deployed host).
 
 Admin features: store overview, inventory/stock edits, order & payment status, customers, coupons.
 
+## Postman
+
+Import `postman/Karwan-API.postman_collection.json` and `postman/Karwan-Local.postman_environment.json`.
+
+1. Run **01 Token Generators → Customer Login** (or Admin Login) — JWT is saved automatically  
+2. Follow the numbered workflow folders  
+
+Details: `postman/README.md`
+
 Coupon: `WELCOME10`

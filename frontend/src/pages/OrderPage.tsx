@@ -10,7 +10,6 @@ export function OrderPage() {
 
   useEffect(() => {
     if (order || !id) return
-    // Guest checkout returns order in navigation state; authenticated users can refetch later.
     api
       .myOrders()
       .then((orders) => {
@@ -23,33 +22,41 @@ export function OrderPage() {
 
   if (error && !order) {
     return (
-      <div className="page container">
-        <div className="alert">{error}</div>
-        <Link to="/shop">Back to shop</Link>
+      <div className="page container" data-testid="order-page" id="order-page">
+        <div className="alert" data-testid="order-error" id="order-error">
+          {error}
+        </div>
+        <Link to="/shop" data-testid="order-back-shop">
+          Back to shop
+        </Link>
       </div>
     )
   }
 
   if (!order) {
     return (
-      <div className="page container">
+      <div className="page container" data-testid="order-loading">
         <p className="muted">Loading order…</p>
       </div>
     )
   }
 
   return (
-    <div className="page">
+    <div className="page" data-testid="order-page" id="order-page" data-order-id={order.id}>
       <div className="container" style={{ maxWidth: 720 }}>
-        <div className="success">Order placed successfully.</div>
-        <h1 className="page-title" style={{ marginTop: '1rem' }}>
+        <div className="success" data-testid="order-success" id="order-success">
+          Order placed successfully.
+        </div>
+        <h1 className="page-title" style={{ marginTop: '1rem' }} data-testid="order-number" id="order-number">
           {order.orderNumber}
         </h1>
-        <p className="muted">Status: {order.status}</p>
+        <p className="muted" data-testid="order-status" id="order-status">
+          Status: {order.status}
+        </p>
 
-        <div className="panel" style={{ marginTop: '1.5rem' }}>
+        <div className="panel" style={{ marginTop: '1.5rem' }} data-testid="order-items" id="order-items">
           {order.items.map((item) => (
-            <div className="summary-row" key={item.id}>
+            <div className="summary-row" key={item.id} data-testid={`order-item-${item.id}`}>
               <span>
                 {item.name} × {item.quantity}
               </span>
@@ -58,20 +65,22 @@ export function OrderPage() {
           ))}
           <div className="summary-row">
             <span>Subtotal</span>
-            <span>{money(order.subtotal)}</span>
+            <span data-testid="order-subtotal">{money(order.subtotal)}</span>
           </div>
           <div className="summary-row">
             <span>Discount</span>
-            <span>-{money(order.discountTotal)}</span>
+            <span data-testid="order-discount">-{money(order.discountTotal)}</span>
           </div>
           <div className="summary-row total">
             <span>Total</span>
-            <span>{money(order.total)}</span>
+            <span data-testid="order-total" id="order-total">
+              {money(order.total)}
+            </span>
           </div>
         </div>
 
         <div style={{ marginTop: '1.5rem' }}>
-          <Link className="btn btn-primary" to="/shop">
+          <Link className="btn btn-primary" to="/shop" data-testid="order-continue-shopping" id="order-continue-shopping">
             Continue shopping
           </Link>
         </div>

@@ -79,7 +79,7 @@ export function AdminOrdersPage() {
   }
 
   return (
-    <div className="admin-page">
+    <div className="admin-page" data-testid="admin-orders-page" id="admin-orders-page">
       <header className="admin-page-head">
         <div>
           <h1>Orders</h1>
@@ -126,6 +126,8 @@ export function AdminOrdersPage() {
                 <tr
                   key={o.id}
                   className={selected?.id === o.id ? 'selected' : ''}
+                  data-testid={`admin-order-row-${o.id}`}
+                  data-order-id={o.id}
                   onClick={() => selectOrder(o)}
                 >
                   <td>{o.orderNumber}</td>
@@ -227,9 +229,14 @@ export function AdminOrdersPage() {
               </div>
 
               <div className="admin-form-row">
-                <label>
+                <label htmlFor="admin-order-status">
                   Package status
-                  <select value={status} onChange={(e) => setStatus(e.target.value)}>
+                  <select
+                    id="admin-order-status"
+                    data-testid="admin-order-status"
+                    value={status}
+                    onChange={(e) => setStatus(e.target.value)}
+                  >
                     {ORDER_STATUSES.map((s) => (
                       <option key={s} value={s}>
                         {s}
@@ -237,9 +244,14 @@ export function AdminOrdersPage() {
                     ))}
                   </select>
                 </label>
-                <label>
+                <label htmlFor="admin-payment-status">
                   Payment status
-                  <select value={paymentStatus} onChange={(e) => setPaymentStatus(e.target.value)}>
+                  <select
+                    id="admin-payment-status"
+                    data-testid="admin-payment-status"
+                    value={paymentStatus}
+                    onChange={(e) => setPaymentStatus(e.target.value)}
+                  >
                     {PAYMENT_STATUSES.map((s) => (
                       <option key={s} value={s}>
                         {s}
@@ -249,9 +261,11 @@ export function AdminOrdersPage() {
                 </label>
               </div>
 
-              <label>
+              <label htmlFor="admin-order-comment">
                 Status comment
                 <textarea
+                  id="admin-order-comment"
+                  data-testid="admin-order-comment"
                   rows={3}
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
@@ -259,7 +273,14 @@ export function AdminOrdersPage() {
                 />
               </label>
 
-              <button type="button" className="admin-btn" disabled={busy} onClick={save}>
+              <button
+                type="button"
+                className="admin-btn"
+                data-testid="admin-order-update"
+                id="admin-order-update"
+                disabled={busy}
+                onClick={save}
+              >
                 {busy ? 'Saving…' : 'Update order'}
               </button>
 

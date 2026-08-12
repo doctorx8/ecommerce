@@ -30,18 +30,31 @@ export function ShopPage() {
   const flatCategories = categories.flatMap((c) => [c, ...(c.children || [])])
 
   return (
-    <div className="page">
+    <div className="page" data-testid="shop-page" id="shop-page">
       <div className="container">
-        <h1 className="page-title">Shop</h1>
+        <h1 className="page-title" data-testid="shop-title">
+          Shop
+        </h1>
         <p className="muted">Browse the full Karwan catalog.</p>
 
-        <div className="toolbar">
+        <div className="toolbar" data-testid="shop-toolbar" id="shop-toolbar">
           <input
+            id="shop-search"
+            name="search"
+            data-testid="shop-search"
             placeholder="Search products"
+            aria-label="Search products"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-          <select value={category} onChange={(e) => setCategory(e.target.value)}>
+          <select
+            id="shop-category"
+            name="category"
+            data-testid="shop-category"
+            aria-label="Filter by category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
             <option value="">All categories</option>
             {flatCategories.map((c) => (
               <option key={c.id} value={c.slug}>
@@ -49,7 +62,14 @@ export function ShopPage() {
               </option>
             ))}
           </select>
-          <select value={sort} onChange={(e) => setSort(e.target.value)}>
+          <select
+            id="shop-sort"
+            name="sort"
+            data-testid="shop-sort"
+            aria-label="Sort products"
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+          >
             <option value="newest">Newest</option>
             <option value="price_asc">Price ↑</option>
             <option value="price_desc">Price ↓</option>
@@ -57,12 +77,18 @@ export function ShopPage() {
           </select>
         </div>
 
-        {error ? <div className="alert">{error}</div> : null}
+        {error ? (
+          <div className="alert" data-testid="shop-error" id="shop-error">
+            {error}
+          </div>
+        ) : null}
 
         {products.length === 0 ? (
-          <div className="empty">No products match your filters.</div>
+          <div className="empty" data-testid="shop-empty" id="shop-empty">
+            No products match your filters.
+          </div>
         ) : (
-          <div className="product-grid">
+          <div className="product-grid" data-testid="shop-product-grid" id="shop-product-grid">
             {products.map((product, index) => (
               <ProductCard key={product.id} product={product} index={index} />
             ))}

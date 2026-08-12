@@ -24,9 +24,9 @@ export function CheckoutPage() {
 
   if (!cart || cart.items.length === 0) {
     return (
-      <div className="page container">
+      <div className="page container" data-testid="checkout-page" id="checkout-page">
         <h1 className="page-title">Checkout</h1>
-        <div className="empty">
+        <div className="empty" data-testid="checkout-empty">
           Nothing to checkout. <Link to="/shop">Shop products</Link>
         </div>
       </div>
@@ -68,63 +68,143 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className="page">
+    <div className="page" data-testid="checkout-page" id="checkout-page">
       <div className="container">
-        <h1 className="page-title">Checkout</h1>
-        <form className="checkout-grid" onSubmit={onSubmit}>
+        <h1 className="page-title" data-testid="checkout-title">
+          Checkout
+        </h1>
+        <form className="checkout-grid" onSubmit={onSubmit} data-testid="checkout-form" id="checkout-form">
           <div className="form-grid">
-            <label className="full">
+            <label className="full" htmlFor="checkout-email">
               Email
-              <input required type="email" value={form.email} onChange={(e) => setField('email', e.target.value)} />
+              <input
+                id="checkout-email"
+                name="email"
+                data-testid="checkout-email"
+                required
+                type="email"
+                value={form.email}
+                onChange={(e) => setField('email', e.target.value)}
+              />
             </label>
-            <label>
+            <label htmlFor="checkout-first-name">
               First name
-              <input required value={form.firstName} onChange={(e) => setField('firstName', e.target.value)} />
+              <input
+                id="checkout-first-name"
+                name="firstName"
+                data-testid="checkout-first-name"
+                required
+                value={form.firstName}
+                onChange={(e) => setField('firstName', e.target.value)}
+              />
             </label>
-            <label>
+            <label htmlFor="checkout-last-name">
               Last name
-              <input required value={form.lastName} onChange={(e) => setField('lastName', e.target.value)} />
+              <input
+                id="checkout-last-name"
+                name="lastName"
+                data-testid="checkout-last-name"
+                required
+                value={form.lastName}
+                onChange={(e) => setField('lastName', e.target.value)}
+              />
             </label>
-            <label className="full">
+            <label className="full" htmlFor="checkout-phone">
               Phone
-              <input value={form.telephone} onChange={(e) => setField('telephone', e.target.value)} />
+              <input
+                id="checkout-phone"
+                name="telephone"
+                data-testid="checkout-phone"
+                value={form.telephone}
+                onChange={(e) => setField('telephone', e.target.value)}
+              />
             </label>
-            <label className="full">
+            <label className="full" htmlFor="checkout-address1">
               Address
-              <input required value={form.address1} onChange={(e) => setField('address1', e.target.value)} />
+              <input
+                id="checkout-address1"
+                name="address1"
+                data-testid="checkout-address1"
+                required
+                value={form.address1}
+                onChange={(e) => setField('address1', e.target.value)}
+              />
             </label>
-            <label>
+            <label htmlFor="checkout-city">
               City
-              <input required value={form.city} onChange={(e) => setField('city', e.target.value)} />
+              <input
+                id="checkout-city"
+                name="city"
+                data-testid="checkout-city"
+                required
+                value={form.city}
+                onChange={(e) => setField('city', e.target.value)}
+              />
             </label>
-            <label>
+            <label htmlFor="checkout-postcode">
               Postcode
-              <input required value={form.postcode} onChange={(e) => setField('postcode', e.target.value)} />
+              <input
+                id="checkout-postcode"
+                name="postcode"
+                data-testid="checkout-postcode"
+                required
+                value={form.postcode}
+                onChange={(e) => setField('postcode', e.target.value)}
+              />
             </label>
-            <label>
+            <label htmlFor="checkout-country">
               Country
-              <input required value={form.country} onChange={(e) => setField('country', e.target.value)} />
+              <input
+                id="checkout-country"
+                name="country"
+                data-testid="checkout-country"
+                required
+                value={form.country}
+                onChange={(e) => setField('country', e.target.value)}
+              />
             </label>
-            <label>
+            <label htmlFor="checkout-zone">
               State / Zone
-              <input value={form.zone} onChange={(e) => setField('zone', e.target.value)} />
+              <input
+                id="checkout-zone"
+                name="zone"
+                data-testid="checkout-zone"
+                value={form.zone}
+                onChange={(e) => setField('zone', e.target.value)}
+              />
             </label>
-            <label className="full">
+            <label className="full" htmlFor="checkout-coupon">
               Coupon
-              <input value={form.couponCode} onChange={(e) => setField('couponCode', e.target.value)} />
+              <input
+                id="checkout-coupon"
+                name="couponCode"
+                data-testid="checkout-coupon"
+                value={form.couponCode}
+                onChange={(e) => setField('couponCode', e.target.value)}
+              />
             </label>
-            {error ? <div className="alert full">{error}</div> : null}
+            {error ? (
+              <div className="alert full" data-testid="checkout-error" id="checkout-error">
+                {error}
+              </div>
+            ) : null}
             <div className="full">
-              <button className="btn btn-primary" type="submit" disabled={busy}>
+              <button
+                className="btn btn-primary"
+                type="submit"
+                disabled={busy}
+                data-testid="checkout-submit"
+                id="checkout-submit"
+              >
                 {busy ? 'Placing order…' : 'Place order'}
               </button>
             </div>
           </div>
 
-          <aside className="summary">
+          <aside className="summary" data-testid="checkout-summary" id="checkout-summary">
             <h3 style={{ marginTop: 0, fontFamily: 'var(--font-display)' }}>Order summary</h3>
             {cart.items.map((item) => (
-              <div className="summary-row" key={item.id}>
+              <div className="summary-row" key={item.id} data-testid={`checkout-summary-item-${item.id}`}>
                 <span>
                   {item.product.name} × {item.quantity}
                 </span>
@@ -133,7 +213,7 @@ export function CheckoutPage() {
             ))}
             <div className="summary-row total">
               <span>Subtotal</span>
-              <span>{money(cart.subtotal)}</span>
+              <span data-testid="checkout-subtotal">{money(cart.subtotal)}</span>
             </div>
           </aside>
         </form>

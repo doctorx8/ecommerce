@@ -86,7 +86,7 @@ export function AdminProductsPage() {
   }
 
   return (
-    <div className="admin-page">
+    <div className="admin-page" data-testid="admin-products-page" id="admin-products-page">
       <header className="admin-page-head">
         <div>
           <h1>Inventory</h1>
@@ -95,9 +95,15 @@ export function AdminProductsPage() {
       </header>
 
       <div className="admin-toolbar">
-        <form onSubmit={onSearch} className="admin-search">
-          <input name="search" defaultValue={search} placeholder="Search name, SKU, model…" />
-          <button type="submit" className="admin-btn">
+        <form onSubmit={onSearch} className="admin-search" data-testid="admin-product-search-form">
+          <input
+            id="admin-product-search"
+            name="search"
+            data-testid="admin-product-search"
+            defaultValue={search}
+            placeholder="Search name, SKU, model…"
+          />
+          <button type="submit" className="admin-btn" data-testid="admin-product-search-btn">
             Search
           </button>
         </form>
@@ -136,7 +142,7 @@ export function AdminProductsPage() {
       {error ? <div className="admin-error">{error}</div> : null}
 
       <section className="admin-panel">
-        <table className="admin-table">
+        <table className="admin-table" data-testid="admin-inventory-table" id="admin-inventory-table">
           <thead>
             <tr>
               <th>Product</th>
@@ -159,7 +165,7 @@ export function AdminProductsPage() {
                 d.stockStatus !== undefined ||
                 d.isActive !== undefined
               return (
-                <tr key={p.id}>
+                <tr key={p.id} data-testid={`admin-product-row-${p.id}`} data-product-id={p.id}>
                   <td>
                     <strong>{p.name}</strong>
                     <div className="admin-muted">{p.model || p.slug}</div>
@@ -169,6 +175,8 @@ export function AdminProductsPage() {
                   <td>
                     <input
                       className="admin-qty"
+                      id={`admin-qty-${p.id}`}
+                      data-testid={`admin-qty-${p.id}`}
                       type="number"
                       min={0}
                       value={qty}
@@ -177,6 +185,8 @@ export function AdminProductsPage() {
                   </td>
                   <td>
                     <select
+                      id={`admin-stock-status-${p.id}`}
+                      data-testid={`admin-stock-status-${p.id}`}
                       value={stockStatus}
                       onChange={(e) => setDraft(p.id, { stockStatus: e.target.value })}
                     >
@@ -190,6 +200,8 @@ export function AdminProductsPage() {
                   <td>
                     <label className="admin-check">
                       <input
+                        id={`admin-active-${p.id}`}
+                        data-testid={`admin-active-${p.id}`}
                         type="checkbox"
                         checked={isActive}
                         onChange={(e) => setDraft(p.id, { isActive: e.target.checked })}
@@ -201,6 +213,7 @@ export function AdminProductsPage() {
                     <button
                       type="button"
                       className="admin-btn compact"
+                      data-testid={`admin-product-save-${p.id}`}
                       disabled={!dirty || busyId === p.id}
                       onClick={() => save(p)}
                     >
