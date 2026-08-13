@@ -1,14 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api, money } from '../api/client'
 import { useStore } from '../state/StoreContext'
+
+type Quote = {
+  subtotal: number | string
+  discountTotal: number | string
+  shippingCost: number | string
+  taxTotal: number | string
+  total: number | string
+}
 
 export function CheckoutPage() {
   const { cart, user, refreshCart } = useStore()
   const navigate = useNavigate()
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [quote, setQuote] = useState<Quote | null>(null)
+  const [paymentOutcome, setPaymentOutcome] = useState<'SUCCESS' | 'FAIL' | 'PENDING'>('SUCCESS')
   const [form, setForm] = useState({
     email: user?.email ?? '',
     firstName: user?.firstName ?? '',
@@ -21,6 +31,14 @@ export function CheckoutPage() {
     zone: '',
     couponCode: 'WELCOME10',
   })
+
+  useEffect(() => {
+    if (!cart || cart.items.length === 0) return
+    api
+      .quote(form.couponCode || undefined)
+      .then(setQuote)
+      .catch(() => setQuote(null))
+  }, [cart, form.couponCode])
 
   if (!cart || cart.items.length === 0) {
     return (
@@ -48,6 +66,8 @@ export function CheckoutPage() {
         lastName: form.lastName,
         telephone: form.telephone,
         couponCode: form.couponCode || undefined,
+        paymentMethod: 'mock_card',
+        paymentOutcome,
         shipping: {
           firstName: form.firstName,
           lastName: form.lastName,
@@ -183,6 +203,27 @@ export function CheckoutPage() {
                 onChange={(e) => setField('couponCode', e.target.value)}
               />
             </label>
+
+            <fieldset className="full" data-testid="checkout-payment" id="checkout-payment">
+              <legend>Mock payment</legend>
+              <p className="muted" style={{ marginTop: 0 }}>
+                Sandbox only — no real card charge.
+              </p>
+              {(['SUCCESS', 'PENDING', 'FAIL'] as const).map((outcome) => (
+                <label key={outcome} className="checkbox-row" htmlFor={`pay-${outcome}`}>
+                  <input
+                    id={`pay-${outcome}`}
+                    data-testid={`checkout-pay-${outcome.toLowerCase()}`}
+                    type="radio"
+                    name="paymentOutcome"
+                    checked={paymentOutcome === outcome}
+                    onChange={() => setPaymentOutcome(outcome)}
+                  />
+                  {outcome}
+                </label>
+              ))}
+            </fieldset>
+
             {error ? (
               <div className="alert full" data-testid="checkout-error" id="checkout-error">
                 {error}
@@ -211,9 +252,25 @@ export function CheckoutPage() {
                 <span>{money(Number(item.product.price) * item.quantity)}</span>
               </div>
             ))}
-            <div className="summary-row total">
+            <div className="summary-row">
               <span>Subtotal</span>
-              <span data-testid="checkout-subtotal">{money(cart.subtotal)}</span>
+              <span data-testid="checkout-subtotal">{money(quote?.subtotal ?? cart.subtotal)}</span>
+            </div>
+            <div className="summary-row">
+              <span>Discount</span>
+              <span data-testid="checkout-discount">-{money(quote?.discountTotal ?? 0)}</span>
+            </div>
+            <div className="summary-row">
+              <span>Shipping</span>
+              <span data-testid="checkout-shipping">{money(quote?.shippingCost ?? 0)}</span>
+            </div>
+            <div className="summary-row">
+              <span>Tax</span>
+              <span data-testid="checkout-tax">{money(quote?.taxTotal ?? 0)}</span>
+            </div>
+            <div className="summary-row total">
+              <span>Total</span>
+              <span data-testid="checkout-total">{money(quote?.total ?? cart.subtotal)}</span>
             </div>
           </aside>
         </form>

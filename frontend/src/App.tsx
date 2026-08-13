@@ -9,7 +9,10 @@ import { CheckoutPage } from './pages/CheckoutPage'
 import { AuthPage } from './pages/AuthPage'
 import { AccountPage } from './pages/AccountPage'
 import { OrderPage } from './pages/OrderPage'
+import { WishlistPage } from './pages/WishlistPage'
 import { AdminProvider } from './admin/AdminContext'
+import { AdminReviewsPage } from './admin/AdminReviewsPage'
+import { AdminAuditPage } from './admin/AdminAuditPage'
 import { AdminLayout } from './admin/AdminLayout'
 import { AdminLoginPage } from './admin/AdminLoginPage'
 import { AdminDashboardPage } from './admin/AdminDashboardPage'
@@ -31,6 +34,8 @@ export default function App() {
               <Route path="orders" element={<AdminOrdersPage />} />
               <Route path="customers" element={<AdminCustomersPage />} />
               <Route path="coupons" element={<AdminCouponsPage />} />
+              <Route path="reviews" element={<AdminReviewsPage />} />
+              <Route path="audit" element={<AdminAuditPage />} />
             </Route>
 
             <Route element={<Layout />}>
@@ -41,6 +46,7 @@ export default function App() {
               <Route path="checkout" element={<CheckoutPage />} />
               <Route path="auth" element={<AuthPage />} />
               <Route path="account" element={<AccountPage />} />
+              <Route path="wishlist" element={<WishlistPage />} />
               <Route path="order/:id" element={<OrderPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>

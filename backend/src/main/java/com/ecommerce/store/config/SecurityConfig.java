@@ -36,15 +36,17 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api", "/api/", "/api/health").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/register",
-                                "/api/auth/admin/login").permitAll()
+                                "/api/auth/admin/login", "/api/auth/forgot-password",
+                                "/api/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/categories/**",
-                                "/api/manufacturers/**", "/api/coupons/**", "/api/reviews/**").permitAll()
+                                "/api/manufacturers/**", "/api/coupons/**", "/api/reviews/**",
+                                "/api/payments/**", "/api/checkout/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cart/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/cart/**").permitAll()
                         .requestMatchers(HttpMethod.PUT, "/api/cart/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/api/cart/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/orders/checkout").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/orders/checkout", "/api/orders/quote").permitAll()
+                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "STAFF")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().permitAll())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

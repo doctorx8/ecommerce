@@ -43,6 +43,31 @@ export function AdminDashboardPage() {
         ))}
       </div>
 
+      <section className="admin-panel" data-testid="admin-sales-chart" id="admin-sales-chart">
+        <div className="admin-panel-head">
+          <h2>Sales (14 days)</h2>
+        </div>
+        {(data.salesOverTime?.length ?? 0) === 0 ? (
+          <p className="admin-muted">No sales in the last 14 days.</p>
+        ) : (
+          <div className="admin-chart">
+            {data.salesOverTime!.map((point) => {
+              const max = Math.max(
+                ...data.salesOverTime!.map((p) => Number(p.revenue) || 0),
+                1,
+              )
+              const height = Math.max((Number(point.revenue) / max) * 120, 4)
+              return (
+                <div key={point.date} className="admin-chart-bar" title={`${point.date}: ${money(point.revenue)}`}>
+                  <div className="admin-chart-fill" style={{ height }} data-testid={`sales-bar-${point.date}`} />
+                  <span>{String(point.date).slice(5)}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </section>
+
       <div className="admin-split">
         <section className="admin-panel">
           <div className="admin-panel-head">

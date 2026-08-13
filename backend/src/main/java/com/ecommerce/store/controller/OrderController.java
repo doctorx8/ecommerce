@@ -2,6 +2,7 @@ package com.ecommerce.store.controller;
 
 import com.ecommerce.store.config.ApiException;
 import com.ecommerce.store.dto.OrderDtos.CheckoutRequest;
+import com.ecommerce.store.dto.OrderDtos.QuoteRequest;
 import com.ecommerce.store.dto.OrderDtos.StatusUpdateRequest;
 import com.ecommerce.store.enums.OrderStatus;
 import com.ecommerce.store.security.AuthUser;
@@ -25,6 +26,11 @@ public class OrderController {
         this.orderService = orderService;
     }
 
+    @PostMapping("/quote")
+    public Map<String, Object> quote(@RequestBody QuoteRequest request) {
+        return orderService.quote(request != null ? request : new QuoteRequest(null, null));
+    }
+
     @PostMapping("/checkout")
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Object> checkout(@Valid @RequestBody CheckoutRequest request, HttpServletRequest http) {
@@ -45,7 +51,7 @@ public class OrderController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public Map<String, Object> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit,
@@ -54,7 +60,7 @@ public class OrderController {
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF')")
     public Map<String, Object> status(@PathVariable Long id, @Valid @RequestBody StatusUpdateRequest request) {
         return orderService.updateStatus(id, request);
     }

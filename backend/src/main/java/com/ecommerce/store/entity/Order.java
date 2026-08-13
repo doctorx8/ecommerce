@@ -38,6 +38,9 @@ public class Order {
     @Column(name = "payment_method")
     private String paymentMethod;
 
+    @Column(name = "payment_ref")
+    private String paymentRef;
+
     @Column(name = "shipping_method")
     private String shippingMethod;
 
@@ -144,6 +147,8 @@ public class Order {
     public void setPaymentStatus(PaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
     public String getPaymentMethod() { return paymentMethod; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+    public String getPaymentRef() { return paymentRef; }
+    public void setPaymentRef(String paymentRef) { this.paymentRef = paymentRef; }
     public String getShippingMethod() { return shippingMethod; }
     public void setShippingMethod(String shippingMethod) { this.shippingMethod = shippingMethod; }
     public String getEmail() { return email; }

@@ -17,6 +17,17 @@ spring:
       hibernate:
         format_sql: true
     show-sql: false
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:1025}
+    username: ${SPRING_MAIL_USERNAME:}
+    password: ${SPRING_MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: ${SPRING_MAIL_SMTP_AUTH:false}
+          starttls:
+            enable: ${SPRING_MAIL_SMTP_STARTTLS:false}
 
 app:
   jwt:
@@ -24,6 +35,19 @@ app:
     expiration-ms: ${APP_JWT_EXPIRATION_MS:604800000}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:*}
+  store:
+    name: ${APP_STORE_NAME:Karwan}
+    public-url: ${APP_PUBLIC_URL:http://localhost:8080}
+  shipping:
+    flat-rate: ${APP_SHIPPING_FLAT_RATE:9.99}
+    free-threshold: ${APP_SHIPPING_FREE_THRESHOLD:100}
+  tax:
+    rate: ${APP_TAX_RATE:0.08}
+  mail:
+    from: ${APP_MAIL_FROM:noreply@karwan.local}
+    enabled: ${APP_MAIL_ENABLED:true}
+  payment:
+    provider: mock
 
 logging:
   level:

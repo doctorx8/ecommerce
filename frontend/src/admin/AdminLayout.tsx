@@ -32,6 +32,12 @@ export function AdminLayout() {
           <NavLink to="/admin/coupons" data-testid="admin-nav-coupons" id="admin-nav-coupons">
             Coupons
           </NavLink>
+          <NavLink to="/admin/reviews" data-testid="admin-nav-reviews" id="admin-nav-reviews">
+            Reviews
+          </NavLink>
+          <NavLink to="/admin/audit" data-testid="admin-nav-audit" id="admin-nav-audit">
+            Audit log
+          </NavLink>
         </nav>
         <div className="admin-sidebar-foot">
           <div className="admin-user" data-testid="admin-user">

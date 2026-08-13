@@ -159,9 +159,29 @@ cy.contains('a', 'Shop').click()
 
 ---
 
+## Checkout extras
+| Element | data-testid |
+|---------|-------------|
+| Payment SUCCESS/PENDING/FAIL | `checkout-pay-success`, `checkout-pay-pending`, `checkout-pay-fail` |
+| Shipping / tax / total | `checkout-shipping`, `checkout-tax`, `checkout-total` |
+
+## PDP reviews / wishlist
+| Element | data-testid |
+|---------|-------------|
+| Wishlist button | `pdp-wishlist` |
+| Review form | `pdp-review-form`, `review-rating`, `review-text`, `review-submit` |
+| Nav wishlist | `nav-wishlist` |
+
+## Admin extras
+| Element | data-testid |
+|---------|-------------|
+| Sales chart | `admin-sales-chart` |
+| Cancel / refund | `admin-order-cancel`, `admin-order-refund` |
+| Reviews / audit nav | `admin-nav-reviews`, `admin-nav-audit` |
+
 ## Suggested smoke flow (customer)
 
 1. `[data-testid="nav-signin"]` → fill `auth-email` / `auth-password` → `auth-submit`
 2. `nav-shop` → optional `shop-search` → click `product-card-{id}`
 3. set `pdp-qty` → `pdp-add-to-cart` → `nav-cart` → `cart-checkout`
-4. fill checkout fields → `checkout-submit` → assert `order-success`
+4. choose `checkout-pay-success`, fill address → `checkout-submit` → assert `order-success`

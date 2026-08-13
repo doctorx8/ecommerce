@@ -31,10 +31,15 @@ public class AuthUser implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (isAdmin()) {
-            return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"),
-                    new SimpleGrantedAuthority("ROLE_" + role));
+            // ADMIN gets ROLE_ADMIN; STAFF gets ROLE_STAFF only (no blanket admin).
+            String authority = "ADMIN".equalsIgnoreCase(role) ? "ROLE_ADMIN" : "ROLE_STAFF";
+            return List.of(new SimpleGrantedAuthority(authority));
         }
         return List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"));
+    }
+
+    public boolean isSuperAdmin() {
+        return isAdmin() && "ADMIN".equalsIgnoreCase(role);
     }
 
     @Override

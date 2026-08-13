@@ -24,6 +24,15 @@ public final class AccountDtos {
             @NotBlank String password
     ) {}
 
+    public record ForgotPasswordRequest(
+            @Email @NotBlank String email
+    ) {}
+
+    public record ResetPasswordRequest(
+            @NotBlank String token,
+            @NotBlank @Size(min = 8) String newPassword
+    ) {}
+
     public record AddressRequest(
             @NotBlank String firstName,
             @NotBlank String lastName,

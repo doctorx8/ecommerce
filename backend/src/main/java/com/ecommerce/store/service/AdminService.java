@@ -27,6 +27,9 @@ public class AdminService {
     private final CouponRepository couponRepository;
     private final CategoryRepository categoryRepository;
     private final OrderService orderService;
+    private final OrderStatusRules orderStatusRules;
+    private final EmailService emailService;
+    private final AuditService auditService;
 
     public AdminService(
             ProductRepository productRepository,
@@ -34,13 +37,19 @@ public class AdminService {
             CustomerRepository customerRepository,
             CouponRepository couponRepository,
             CategoryRepository categoryRepository,
-            OrderService orderService) {
+            OrderService orderService,
+            OrderStatusRules orderStatusRules,
+            EmailService emailService,
+            AuditService auditService) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
         this.couponRepository = couponRepository;
         this.categoryRepository = categoryRepository;
         this.orderService = orderService;
+        this.orderStatusRules = orderStatusRules;
+        this.emailService = emailService;
+        this.auditService = auditService;
     }
 
     @Transactional(readOnly = true)
@@ -85,7 +94,20 @@ public class AdminService {
         map.put("recentOrders", recentOrders);
         map.put("lowStockProducts", lowStockProducts);
         map.put("categories", categoryRepository.count());
+        map.put("salesOverTime", salesOverTime());
         return map;
+    }
+
+    private List<Map<String, Object>> salesOverTime() {
+        List<Map<String, Object>> series = new ArrayList<>();
+        for (Object[] row : orderRepository.salesLast14Days()) {
+            Map<String, Object> point = new LinkedHashMap<>();
+            point.put("date", String.valueOf(row[0]));
+            point.put("revenue", row[1]);
+            point.put("orders", row[2]);
+            series.add(point);
+        }
+        return series;
     }
 
     @Transactional(readOnly = true)
@@ -139,7 +161,10 @@ public class AdminService {
         if (req.active() != null) {
             product.setActive(req.active());
         }
-        return toInventoryMap(productRepository.save(product));
+        Product saved = productRepository.save(product);
+        auditService.record("INVENTORY_UPDATE", "Product", saved.getId(),
+                "qty=" + saved.getQuantity() + ",status=" + saved.getStockStatus());
+        return toInventoryMap(saved);
     }
 
     @Transactional(readOnly = true)
@@ -185,7 +210,9 @@ public class AdminService {
         }
         Coupon coupon = new Coupon();
         applyCoupon(coupon, req, code);
-        return toCouponMap(couponRepository.save(coupon));
+        Coupon saved = couponRepository.save(coupon);
+        auditService.record("COUPON_CREATE", "Coupon", saved.getId(), saved.getCode());
+        return toCouponMap(saved);
     }
 
     @Transactional
@@ -199,7 +226,9 @@ public class AdminService {
             }
         });
         applyCoupon(coupon, req, code);
-        return toCouponMap(couponRepository.save(coupon));
+        Coupon saved = couponRepository.save(coupon);
+        auditService.record("COUPON_UPDATE", "Coupon", saved.getId(), saved.getCode());
+        return toCouponMap(saved);
     }
 
     @Transactional
@@ -208,6 +237,7 @@ public class AdminService {
             throw new ApiException("Coupon not found", HttpStatus.NOT_FOUND);
         }
         couponRepository.deleteById(id);
+        auditService.record("COUPON_DELETE", "Coupon", id, null);
     }
 
     @Transactional
@@ -215,6 +245,7 @@ public class AdminService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ApiException("Order not found", HttpStatus.NOT_FOUND));
         if (req.status() != null && req.status() != order.getStatus()) {
+            orderStatusRules.assertTransition(order.getStatus(), req.status());
             order.setStatus(req.status());
             OrderHistory history = new OrderHistory();
             history.setOrder(order);
@@ -222,11 +253,66 @@ public class AdminService {
             history.setComment(req.comment());
             history.setNotify(Boolean.TRUE.equals(req.notifyCustomer()));
             order.getHistory().add(history);
+            if (Boolean.TRUE.equals(req.notifyCustomer())
+                    || req.status() == OrderStatus.SHIPPED
+                    || req.status() == OrderStatus.DELIVERED) {
+                emailService.sendShippingUpdate(
+                        order.getEmail(), order.getOrderNumber(), req.status().name(), req.comment());
+            }
         }
         if (req.paymentStatus() != null) {
             order.setPaymentStatus(req.paymentStatus());
         }
-        return orderService.toAdminOrderMap(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+        auditService.record("ORDER_UPDATE", "Order", saved.getId(),
+                "status=" + saved.getStatus() + ",payment=" + saved.getPaymentStatus());
+        return orderService.toAdminOrderMap(saved);
+    }
+
+    @Transactional
+    public Map<String, Object> cancelOrder(Long id, String comment) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ApiException("Order not found", HttpStatus.NOT_FOUND));
+        if (!orderStatusRules.canCancel(order.getStatus())) {
+            throw new ApiException("Order cannot be cancelled in status " + order.getStatus(), HttpStatus.BAD_REQUEST);
+        }
+        orderStatusRules.assertTransition(order.getStatus(), OrderStatus.CANCELLED);
+        order.setStatus(OrderStatus.CANCELLED);
+        OrderHistory history = new OrderHistory();
+        history.setOrder(order);
+        history.setStatus(OrderStatus.CANCELLED);
+        history.setComment(comment != null ? comment : "Cancelled by admin");
+        history.setNotify(true);
+        order.getHistory().add(history);
+        Order saved = orderRepository.save(order);
+        emailService.sendShippingUpdate(saved.getEmail(), saved.getOrderNumber(), "CANCELLED", history.getComment());
+        auditService.record("ORDER_CANCEL", "Order", id, history.getComment());
+        return orderService.toAdminOrderMap(saved);
+    }
+
+    @Transactional
+    public Map<String, Object> refundOrder(Long id, String comment) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ApiException("Order not found", HttpStatus.NOT_FOUND));
+        if (order.getStatus() == OrderStatus.REFUNDED) {
+            throw new ApiException("Order already refunded", HttpStatus.BAD_REQUEST);
+        }
+        if (!orderStatusRules.canRefund(order.getStatus()) && order.getStatus() != OrderStatus.CANCELLED) {
+            throw new ApiException("Order cannot be refunded in status " + order.getStatus(), HttpStatus.BAD_REQUEST);
+        }
+        orderStatusRules.assertTransition(order.getStatus(), OrderStatus.REFUNDED);
+        order.setStatus(OrderStatus.REFUNDED);
+        order.setPaymentStatus(PaymentStatus.REFUNDED);
+        OrderHistory history = new OrderHistory();
+        history.setOrder(order);
+        history.setStatus(OrderStatus.REFUNDED);
+        history.setComment(comment != null ? comment : "Refunded by admin");
+        history.setNotify(true);
+        order.getHistory().add(history);
+        Order saved = orderRepository.save(order);
+        emailService.sendShippingUpdate(saved.getEmail(), saved.getOrderNumber(), "REFUNDED", history.getComment());
+        auditService.record("ORDER_REFUND", "Order", id, history.getComment());
+        return orderService.toAdminOrderMap(saved);
     }
 
     private void applyCoupon(Coupon coupon, CouponRequest req, String code) {

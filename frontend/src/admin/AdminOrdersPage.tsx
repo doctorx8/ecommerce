@@ -273,16 +273,62 @@ export function AdminOrdersPage() {
                 />
               </label>
 
-              <button
-                type="button"
-                className="admin-btn"
-                data-testid="admin-order-update"
-                id="admin-order-update"
-                disabled={busy}
-                onClick={save}
-              >
-                {busy ? 'Saving…' : 'Update order'}
-              </button>
+              <div className="admin-actions">
+                <button
+                  type="button"
+                  className="admin-btn"
+                  data-testid="admin-order-update"
+                  id="admin-order-update"
+                  disabled={busy}
+                  onClick={save}
+                >
+                  {busy ? 'Saving…' : 'Update order'}
+                </button>
+                <button
+                  type="button"
+                  className="admin-ghost"
+                  data-testid="admin-order-cancel"
+                  id="admin-order-cancel"
+                  disabled={busy}
+                  onClick={async () => {
+                    if (!selected || !confirm('Cancel this order?')) return
+                    setBusy(true)
+                    try {
+                      const updated = await adminApi.cancelOrder(selected.id, comment || 'Cancelled by admin')
+                      setSelected(updated)
+                      setItems((prev) => prev.map((o) => (o.id === updated.id ? updated : o)))
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Cancel failed')
+                    } finally {
+                      setBusy(false)
+                    }
+                  }}
+                >
+                  Cancel order
+                </button>
+                <button
+                  type="button"
+                  className="admin-ghost danger"
+                  data-testid="admin-order-refund"
+                  id="admin-order-refund"
+                  disabled={busy}
+                  onClick={async () => {
+                    if (!selected || !confirm('Refund this order?')) return
+                    setBusy(true)
+                    try {
+                      const updated = await adminApi.refundOrder(selected.id, comment || 'Refunded by admin')
+                      setSelected(updated)
+                      setItems((prev) => prev.map((o) => (o.id === updated.id ? updated : o)))
+                    } catch (err) {
+                      setError(err instanceof Error ? err.message : 'Refund failed')
+                    } finally {
+                      setBusy(false)
+                    }
+                  }}
+                >
+                  Refund
+                </button>
+              </div>
 
               {selected.history && selected.history.length > 0 ? (
                 <>

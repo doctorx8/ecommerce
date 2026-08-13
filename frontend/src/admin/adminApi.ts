@@ -94,6 +94,7 @@ export type AdminOverview = {
   ordersByStatus: Record<string, number>
   recentOrders: AdminOrder[]
   lowStockProducts: AdminProduct[]
+  salesOverTime?: { date: string; revenue: number | string; orders: number | string }[]
 }
 
 export const ORDER_STATUSES = [
@@ -200,6 +201,40 @@ export const adminApi = {
     }),
   deleteCoupon: (id: number) =>
     adminRequest<void>(`/admin/coupons/${id}`, { method: 'DELETE' }),
+  cancelOrder: (id: number, comment?: string) =>
+    adminRequest<AdminOrder>(`/admin/orders/${id}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify({ comment }),
+    }),
+  refundOrder: (id: number, comment?: string) =>
+    adminRequest<AdminOrder>(`/admin/orders/${id}/refund`, {
+      method: 'POST',
+      body: JSON.stringify({ comment }),
+    }),
+  pendingReviews: () =>
+    adminRequest<
+      { id: number; productId: number; author: string; rating: number; text: string; createdAt?: string }[]
+    >('/admin/reviews/pending'),
+  approveReview: (id: number) =>
+    adminRequest(`/admin/reviews/${id}/approve`, { method: 'PATCH' }),
+  rejectReview: (id: number) =>
+    adminRequest(`/admin/reviews/${id}/reject`, { method: 'PATCH' }),
+  deleteReview: (id: number) =>
+    adminRequest<void>(`/admin/reviews/${id}`, { method: 'DELETE' }),
+  auditLogs: (page = 1) =>
+    adminRequest<{
+      items: {
+        id: number
+        actorEmail?: string
+        actorRole?: string
+        action: string
+        entityType?: string
+        entityId?: string
+        details?: string
+        createdAt?: string
+      }[]
+      total: number
+    }>(`/admin/audit-logs?page=${page}&limit=50`),
 }
 
 export { money }

@@ -5,7 +5,9 @@ import com.ecommerce.store.dto.AdminDtos.InventoryUpdateRequest;
 import com.ecommerce.store.dto.AdminDtos.OrderAdminUpdateRequest;
 import com.ecommerce.store.enums.OrderStatus;
 import com.ecommerce.store.service.AdminService;
+import com.ecommerce.store.service.AuditService;
 import com.ecommerce.store.service.OrderService;
+import com.ecommerce.store.service.ReviewService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -15,15 +17,23 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/admin")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN','STAFF')")
 public class AdminController {
 
     private final AdminService adminService;
     private final OrderService orderService;
+    private final ReviewService reviewService;
+    private final AuditService auditService;
 
-    public AdminController(AdminService adminService, OrderService orderService) {
+    public AdminController(
+            AdminService adminService,
+            OrderService orderService,
+            ReviewService reviewService,
+            AuditService auditService) {
         this.adminService = adminService;
         this.orderService = orderService;
+        this.reviewService = reviewService;
+        this.auditService = auditService;
     }
 
     @GetMapping("/overview")
@@ -68,6 +78,24 @@ public class AdminController {
         return adminService.updateOrder(id, request);
     }
 
+    @PostMapping("/orders/{id}/cancel")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> cancelOrder(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body) {
+        String comment = body != null ? body.get("comment") : null;
+        return adminService.cancelOrder(id, comment);
+    }
+
+    @PostMapping("/orders/{id}/refund")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> refundOrder(
+            @PathVariable Long id,
+            @RequestBody(required = false) Map<String, String> body) {
+        String comment = body != null ? body.get("comment") : null;
+        return adminService.refundOrder(id, comment);
+    }
+
     @GetMapping("/customers")
     public Map<String, Object> customers(
             @RequestParam(defaultValue = "1") int page,
@@ -82,12 +110,14 @@ public class AdminController {
     }
 
     @PostMapping("/coupons")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, Object> createCoupon(@Valid @RequestBody CouponRequest request) {
         return adminService.createCoupon(request);
     }
 
     @PutMapping("/coupons/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public Map<String, Object> updateCoupon(
             @PathVariable Long id,
             @Valid @RequestBody CouponRequest request) {
@@ -95,8 +125,42 @@ public class AdminController {
     }
 
     @DeleteMapping("/coupons/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteCoupon(@PathVariable Long id) {
         adminService.deleteCoupon(id);
+    }
+
+    @GetMapping("/reviews/pending")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<Map<String, Object>> pendingReviews() {
+        return reviewService.listPending();
+    }
+
+    @PatchMapping("/reviews/{id}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> approveReview(@PathVariable Long id) {
+        return reviewService.approve(id, true);
+    }
+
+    @PatchMapping("/reviews/{id}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> rejectReview(@PathVariable Long id) {
+        return reviewService.approve(id, false);
+    }
+
+    @DeleteMapping("/reviews/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteReview(@PathVariable Long id) {
+        reviewService.delete(id);
+    }
+
+    @GetMapping("/audit-logs")
+    @PreAuthorize("hasRole('ADMIN')")
+    public Map<String, Object> auditLogs(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "50") int limit) {
+        return auditService.list(page, limit);
     }
 }

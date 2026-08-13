@@ -19,6 +19,14 @@ services:
       timeout: 5s
       retries: 30
 
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: karwan-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
   # Hostinger Docker Manager can pull public Docker Hub images, but GHCR often stays private.
   # So we run the official JRE image and download the release JAR on start.
   app:
@@ -28,14 +36,26 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      mailhog:
+        condition: service_started
     ports:
       - "8080:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ecommerce?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: ecommerce
       SPRING_DATASOURCE_PASSWORD: ecommerce
-      APP_JWT_SECRET: change-me-to-a-long-random-secret-at-least-32-chars
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-change-me-to-a-long-random-secret-at-least-32-chars}
       SERVER_PORT: 8080
+      APP_PUBLIC_URL: ${APP_PUBLIC_URL:-http://localhost:8080}
+      APP_SHIPPING_FLAT_RATE: ${APP_SHIPPING_FLAT_RATE:-9.99}
+      APP_SHIPPING_FREE_THRESHOLD: ${APP_SHIPPING_FREE_THRESHOLD:-100}
+      APP_TAX_RATE: ${APP_TAX_RATE:-0.08}
+      APP_MAIL_ENABLED: ${APP_MAIL_ENABLED:-true}
+      APP_MAIL_FROM: ${APP_MAIL_FROM:-noreply@karwan.local}
+      SPRING_MAIL_HOST: mailhog
+      SPRING_MAIL_PORT: 1025
+      SPRING_MAIL_SMTP_AUTH: "false"
+      SPRING_MAIL_SMTP_STARTTLS: "false"
       JAR_URL: https://github.com/doctorx8/ecommerce/releases/latest/download/karwan-store.jar
     entrypoint: ["/bin/bash", "-c"]
     command:

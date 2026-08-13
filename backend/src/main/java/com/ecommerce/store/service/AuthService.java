@@ -3,18 +3,25 @@ package com.ecommerce.store.service;
 import com.ecommerce.store.config.ApiException;
 import com.ecommerce.store.dto.AccountDtos.ChangePasswordRequest;
 import com.ecommerce.store.dto.AccountDtos.DeleteAccountRequest;
+import com.ecommerce.store.dto.AccountDtos.ForgotPasswordRequest;
+import com.ecommerce.store.dto.AccountDtos.ResetPasswordRequest;
 import com.ecommerce.store.dto.AccountDtos.UpdateProfileRequest;
 import com.ecommerce.store.dto.AuthDtos.LoginRequest;
 import com.ecommerce.store.dto.AuthDtos.RegisterRequest;
 import com.ecommerce.store.entity.AdminUser;
 import com.ecommerce.store.entity.Customer;
+import com.ecommerce.store.entity.PasswordResetToken;
 import com.ecommerce.store.repository.AdminUserRepository;
 import com.ecommerce.store.repository.CartItemRepository;
 import com.ecommerce.store.repository.CustomerRepository;
+import com.ecommerce.store.repository.PasswordResetTokenRepository;
 import com.ecommerce.store.security.AuthUser;
 import com.ecommerce.store.security.JwtService;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,20 +33,26 @@ public class AuthService {
     private final CustomerRepository customerRepository;
     private final AdminUserRepository adminUserRepository;
     private final CartItemRepository cartItemRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final EmailService emailService;
 
     public AuthService(
             CustomerRepository customerRepository,
             AdminUserRepository adminUserRepository,
             CartItemRepository cartItemRepository,
+            PasswordResetTokenRepository passwordResetTokenRepository,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService) {
+            JwtService jwtService,
+            EmailService emailService) {
         this.customerRepository = customerRepository;
         this.adminUserRepository = adminUserRepository;
         this.cartItemRepository = cartItemRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -130,10 +143,38 @@ public class AuthService {
         cartItemRepository.deleteByCustomerId(customerId);
         customer.setActive(false);
         customer.setEmail("deleted+" + customer.getId() + "@karwan.local");
-        customer.setPasswordHash(passwordEncoder.encode(java.util.UUID.randomUUID().toString()));
+        customer.setPasswordHash(passwordEncoder.encode(UUID.randomUUID().toString()));
         customer.setTelephone(null);
         customer.setNewsletter(false);
         customerRepository.save(customer);
+    }
+
+    @Transactional
+    public Map<String, Object> forgotPassword(ForgotPasswordRequest req) {
+        // Always return success to avoid email enumeration.
+        customerRepository.findByEmail(req.email()).filter(Customer::isActive).ifPresent(customer -> {
+            PasswordResetToken token = new PasswordResetToken();
+            token.setCustomer(customer);
+            token.setToken(UUID.randomUUID().toString().replace("-", ""));
+            token.setExpiresAt(Instant.now().plus(1, ChronoUnit.HOURS));
+            passwordResetTokenRepository.save(token);
+            emailService.sendPasswordReset(customer.getEmail(), token.getToken());
+        });
+        return Map.of("ok", true, "message", "If that email exists, a reset link was sent.");
+    }
+
+    @Transactional
+    public void resetPassword(ResetPasswordRequest req) {
+        PasswordResetToken token = passwordResetTokenRepository.findByToken(req.token())
+                .orElseThrow(() -> new ApiException("Invalid or expired reset token", HttpStatus.BAD_REQUEST));
+        if (token.getUsedAt() != null || token.getExpiresAt().isBefore(Instant.now())) {
+            throw new ApiException("Invalid or expired reset token", HttpStatus.BAD_REQUEST);
+        }
+        Customer customer = token.getCustomer();
+        customer.setPasswordHash(passwordEncoder.encode(req.newPassword()));
+        customerRepository.save(customer);
+        token.setUsedAt(Instant.now());
+        passwordResetTokenRepository.save(token);
     }
 
     private Customer requireActiveCustomer(Long customerId) {

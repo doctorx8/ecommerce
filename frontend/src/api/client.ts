@@ -199,12 +199,47 @@ export const api = {
     }),
   removeCartItem: (id: number) =>
     request<Cart>(`/cart/${id}?sessionId=${sessionId()}`, { method: 'DELETE' }),
+  quote: (couponCode?: string) =>
+    request<{
+      subtotal: number | string
+      discountTotal: number | string
+      shippingCost: number | string
+      taxTotal: number | string
+      total: number | string
+      taxRate: number | string
+      shippingFreeThreshold: number | string
+    }>('/orders/quote', {
+      method: 'POST',
+      body: JSON.stringify({ sessionId: sessionId(), couponCode }),
+    }),
   checkout: (payload: Record<string, unknown>) =>
     request<Order>('/orders/checkout', {
       method: 'POST',
       body: JSON.stringify({ ...payload, sessionId: sessionId() }),
     }),
   myOrders: () => request<Order[]>('/orders/mine'),
+  forgotPassword: (email: string) =>
+    request<{ ok: boolean; message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+  resetPassword: (token: string, newPassword: string) =>
+    request<void>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    }),
+  getReviews: (productId: number) =>
+    request<{ id: number; author: string; rating: number; text: string; createdAt?: string }[]>(
+      `/reviews/product/${productId}`,
+    ),
+  createReview: (payload: { productId: number; rating: number; text: string; author?: string }) =>
+    request('/reviews', { method: 'POST', body: JSON.stringify(payload) }),
+  getWishlist: () =>
+    request<{ id: number; product: Product; createdAt?: string }[]>('/wishlist'),
+  addWishlist: (productId: number) =>
+    request(`/wishlist/${productId}`, { method: 'POST' }),
+  removeWishlist: (productId: number) =>
+    request<void>(`/wishlist/${productId}`, { method: 'DELETE' }),
 }
 
 export function money(value: number | string | undefined | null): string {

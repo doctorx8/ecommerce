@@ -3,6 +3,8 @@ package com.ecommerce.store.controller;
 import com.ecommerce.store.config.ApiException;
 import com.ecommerce.store.dto.AccountDtos.ChangePasswordRequest;
 import com.ecommerce.store.dto.AccountDtos.DeleteAccountRequest;
+import com.ecommerce.store.dto.AccountDtos.ForgotPasswordRequest;
+import com.ecommerce.store.dto.AccountDtos.ResetPasswordRequest;
 import com.ecommerce.store.dto.AccountDtos.UpdateProfileRequest;
 import com.ecommerce.store.dto.AuthDtos.LoginRequest;
 import com.ecommerce.store.dto.AuthDtos.RegisterRequest;
@@ -38,6 +40,17 @@ public class AuthController {
     @PostMapping("/admin/login")
     public Map<String, Object> adminLogin(@Valid @RequestBody LoginRequest request) {
         return authService.loginAdmin(request);
+    }
+
+    @PostMapping("/forgot-password")
+    public Map<String, Object> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        return authService.forgotPassword(request);
+    }
+
+    @PostMapping("/reset-password")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
     }
 
     @GetMapping("/me")

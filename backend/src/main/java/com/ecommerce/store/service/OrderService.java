@@ -3,6 +3,7 @@ package com.ecommerce.store.service;
 import com.ecommerce.store.config.ApiException;
 import com.ecommerce.store.dto.OrderDtos.AddressPayload;
 import com.ecommerce.store.dto.OrderDtos.CheckoutRequest;
+import com.ecommerce.store.dto.OrderDtos.QuoteRequest;
 import com.ecommerce.store.dto.OrderDtos.StatusUpdateRequest;
 import com.ecommerce.store.entity.*;
 import com.ecommerce.store.enums.OrderStatus;
@@ -11,6 +12,7 @@ import com.ecommerce.store.enums.StockStatus;
 import com.ecommerce.store.repository.*;
 import com.ecommerce.store.security.AuthUser;
 import com.ecommerce.store.service.CartService.Owner;
+import com.ecommerce.store.service.MockPaymentService.PaymentResult;
 import com.ecommerce.store.util.OrderNumberUtils;
 import com.ecommerce.store.util.SecurityUtils;
 import java.math.BigDecimal;
@@ -34,6 +36,10 @@ public class OrderService {
     private final CustomerRepository customerRepository;
     private final CouponRepository couponRepository;
     private final ProductRepository productRepository;
+    private final PricingService pricingService;
+    private final MockPaymentService mockPaymentService;
+    private final EmailService emailService;
+    private final OrderStatusRules orderStatusRules;
 
     public OrderService(
             OrderRepository orderRepository,
@@ -41,13 +47,21 @@ public class OrderService {
             CartItemRepository cartItemRepository,
             CustomerRepository customerRepository,
             CouponRepository couponRepository,
-            ProductRepository productRepository) {
+            ProductRepository productRepository,
+            PricingService pricingService,
+            MockPaymentService mockPaymentService,
+            EmailService emailService,
+            OrderStatusRules orderStatusRules) {
         this.orderRepository = orderRepository;
         this.cartService = cartService;
         this.cartItemRepository = cartItemRepository;
         this.customerRepository = customerRepository;
         this.couponRepository = couponRepository;
         this.productRepository = productRepository;
+        this.pricingService = pricingService;
+        this.mockPaymentService = mockPaymentService;
+        this.emailService = emailService;
+        this.orderStatusRules = orderStatusRules;
     }
 
     @Transactional
@@ -95,12 +109,13 @@ public class OrderService {
             }
         }
 
-        BigDecimal shippingCost = req.shippingCost() != null ? req.shippingCost() : BigDecimal.ZERO;
-        BigDecimal taxTotal = BigDecimal.ZERO;
-        BigDecimal total = subtotal.add(shippingCost).add(taxTotal).subtract(discountTotal);
-        if (total.compareTo(BigDecimal.ZERO) < 0) {
-            total = BigDecimal.ZERO;
-        }
+        Map<String, Object> quote = pricingService.quote(subtotal, discountTotal);
+        BigDecimal shippingCost = (BigDecimal) quote.get("shippingCost");
+        BigDecimal taxTotal = (BigDecimal) quote.get("taxTotal");
+        BigDecimal total = (BigDecimal) quote.get("total");
+
+        String paymentMethod = req.paymentMethod() != null ? req.paymentMethod() : "mock_card";
+        PaymentResult payment = mockPaymentService.charge(req.paymentOutcome(), paymentMethod);
 
         AddressPayload shipping = req.shipping();
         AddressPayload billing = req.billing() != null ? req.billing() : shipping;
@@ -120,8 +135,9 @@ public class OrderService {
         order.setCustomer(customer);
         order.setCoupon(coupon);
         order.setStatus(OrderStatus.PENDING);
-        order.setPaymentStatus(PaymentStatus.PENDING);
-        order.setPaymentMethod(req.paymentMethod() != null ? req.paymentMethod() : "cod");
+        order.setPaymentStatus(payment.status());
+        order.setPaymentMethod(paymentMethod);
+        order.setPaymentRef(payment.paymentRef());
         order.setShippingMethod(req.shippingMethod() != null ? req.shippingMethod() : "flat");
         order.setEmail(email);
         order.setTelephone(telephone);
@@ -146,10 +162,10 @@ public class OrderService {
         order.setBillingCountry(billing.country());
         order.setBillingZone(billing.zone());
         order.setSubtotal(subtotal.setScale(2, RoundingMode.HALF_UP));
-        order.setShippingCost(shippingCost.setScale(2, RoundingMode.HALF_UP));
+        order.setShippingCost(shippingCost);
         order.setDiscountTotal(discountTotal.setScale(2, RoundingMode.HALF_UP));
         order.setTaxTotal(taxTotal);
-        order.setTotal(total.setScale(2, RoundingMode.HALF_UP));
+        order.setTotal(total);
         order.setComment(req.comment());
         order.setIpAddress(ipAddress);
 
@@ -179,7 +195,8 @@ public class OrderService {
         OrderHistory history = new OrderHistory();
         history.setOrder(order);
         history.setStatus(OrderStatus.PENDING);
-        history.setComment("Order placed");
+        history.setComment("Order placed · " + payment.message());
+        history.setNotify(true);
         order.getHistory().add(history);
 
         orderRepository.save(order);
@@ -195,7 +212,37 @@ public class OrderService {
             cartItemRepository.deleteBySessionId(owner.sessionId());
         }
 
+        emailService.sendOrderConfirmation(email, order.getOrderNumber(), "$" + order.getTotal());
         return toOrderMap(order);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> quote(QuoteRequest req) {
+        AuthUser user = SecurityUtils.currentUser().orElse(null);
+        Owner owner = user != null && user.isCustomer()
+                ? new Owner(user.getId(), null)
+                : cartService.resolveOwner(req.sessionId());
+        List<CartItem> cartItems = cartService.loadItems(owner);
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (CartItem item : cartItems) {
+            subtotal = subtotal.add(item.getProduct().getPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+        }
+        BigDecimal discountTotal = BigDecimal.ZERO;
+        if (req.couponCode() != null && !req.couponCode().isBlank() && subtotal.compareTo(BigDecimal.ZERO) > 0) {
+            Coupon coupon = validateCoupon(req.couponCode(), subtotal);
+            if ("PERCENT".equalsIgnoreCase(coupon.getType())) {
+                discountTotal = subtotal.multiply(coupon.getDiscount())
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            } else {
+                discountTotal = coupon.getDiscount();
+            }
+            if (discountTotal.compareTo(subtotal) > 0) {
+                discountTotal = subtotal;
+            }
+        }
+        Map<String, Object> quote = pricingService.quote(subtotal, discountTotal);
+        quote.put("itemCount", cartItems.stream().mapToInt(CartItem::getQuantity).sum());
+        return quote;
     }
 
     @Transactional(readOnly = true)
@@ -247,6 +294,7 @@ public class OrderService {
     public Map<String, Object> updateStatus(Long id, StatusUpdateRequest req) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ApiException("Order not found", HttpStatus.NOT_FOUND));
+        orderStatusRules.assertTransition(order.getStatus(), req.status());
         order.setStatus(req.status());
         OrderHistory history = new OrderHistory();
         history.setOrder(order);
@@ -254,7 +302,17 @@ public class OrderService {
         history.setComment(req.comment());
         history.setNotify(Boolean.TRUE.equals(req.notifyCustomer()));
         order.getHistory().add(history);
-        return toOrderMap(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+        if (Boolean.TRUE.equals(req.notifyCustomer())
+                || req.status() == OrderStatus.SHIPPED
+                || req.status() == OrderStatus.DELIVERED) {
+            emailService.sendShippingUpdate(
+                    saved.getEmail(),
+                    saved.getOrderNumber(),
+                    saved.getStatus().name(),
+                    req.comment());
+        }
+        return toAdminOrderMap(saved);
     }
 
     @Transactional(readOnly = true)
@@ -307,6 +365,7 @@ public class OrderService {
         map.put("status", order.getStatus().name());
         map.put("paymentStatus", order.getPaymentStatus().name());
         map.put("paymentMethod", order.getPaymentMethod());
+        map.put("paymentRef", order.getPaymentRef());
         map.put("shippingMethod", order.getShippingMethod());
         map.put("email", order.getEmail());
         map.put("telephone", order.getTelephone());

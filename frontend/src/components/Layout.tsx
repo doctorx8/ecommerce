@@ -23,6 +23,9 @@ export function Layout() {
             </NavLink>
             {user ? (
               <>
+                <NavLink to="/wishlist" data-testid="nav-wishlist" id="nav-wishlist">
+                  Wishlist
+                </NavLink>
                 <NavLink to="/account" data-testid="nav-account" id="nav-account">
                   Account
                 </NavLink>

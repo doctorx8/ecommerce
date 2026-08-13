@@ -1,5 +1,6 @@
 package com.ecommerce.store.dto;
 
+import com.ecommerce.store.enums.MockPaymentOutcome;
 import com.ecommerce.store.enums.OrderStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -35,7 +36,13 @@ public final class OrderDtos {
             String shippingMethod,
             @PositiveOrZero BigDecimal shippingCost,
             String couponCode,
-            String comment
+            String comment,
+            MockPaymentOutcome paymentOutcome
+    ) {}
+
+    public record QuoteRequest(
+            String sessionId,
+            String couponCode
     ) {}
 
     public record StatusUpdateRequest(

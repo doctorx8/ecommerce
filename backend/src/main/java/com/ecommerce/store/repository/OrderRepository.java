@@ -19,4 +19,14 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @Query("select coalesce(sum(o.total), 0) from Order o where o.status not in (com.ecommerce.store.enums.OrderStatus.CANCELLED, com.ecommerce.store.enums.OrderStatus.REFUNDED)")
     BigDecimal sumRevenueExcludingCancelled();
+
+    @Query(value = """
+            select date(o.created_at) as day, coalesce(sum(o.total), 0) as revenue, count(*) as orders
+            from orders o
+            where o.created_at >= (current_date - interval 13 day)
+              and o.status not in ('CANCELLED', 'REFUNDED')
+            group by date(o.created_at)
+            order by day asc
+            """, nativeQuery = true)
+    List<Object[]> salesLast14Days();
 }
