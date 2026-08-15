@@ -75,10 +75,13 @@ public class CatalogController {
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String manufacturer,
             @RequestParam(required = false) Boolean featured,
+            @RequestParam(required = false) Boolean inStock,
+            @RequestParam(required = false) Boolean onSale,
             @RequestParam(defaultValue = "newest") String sort,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice) {
-        return catalogService.listProducts(page, limit, search, category, manufacturer, featured, sort, minPrice, maxPrice);
+        return catalogService.listProducts(
+                page, limit, search, category, manufacturer, featured, inStock, onSale, sort, minPrice, maxPrice);
     }
 
     @GetMapping("/products/{idOrSlug}")

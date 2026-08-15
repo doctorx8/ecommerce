@@ -70,8 +70,14 @@ public class DataSeeder {
             categoryRepository.save(electronics);
             Category phones = category("Phones", "phones", "Smartphones and accessories", electronics, 1);
             Category laptops = category("Laptops", "laptops", "Notebooks and ultrabooks", electronics, 2);
+            Category audio = category("Audio", "audio", "Headphones, earbuds, and speakers", electronics, 3);
+            Category tablets = category("Tablets", "tablets", "iPad and Android tablets", electronics, 4);
+            Category accessories = category("Accessories", "accessories", "Cases, chargers, and cables", electronics, 5);
             categoryRepository.save(phones);
             categoryRepository.save(laptops);
+            categoryRepository.save(audio);
+            categoryRepository.save(tablets);
+            categoryRepository.save(accessories);
 
             Product iphone = product("iPhone 15", "iphone-15", "IPHONE-15-128", "A3090",
                     "Latest Apple smartphone",
@@ -107,6 +113,7 @@ public class DataSeeder {
                     "Premium wireless headphones with exceptional noise cancellation and sound quality.",
                     new BigDecimal("348"), null, 100, false, sony);
             headphones.getCategories().add(electronics);
+            headphones.getCategories().add(audio);
             addImage(headphones, "/images/sony-headphones.jpg", "Sony Headphones");
             productRepository.save(headphones);
 

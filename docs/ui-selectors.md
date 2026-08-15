@@ -64,7 +64,12 @@ cy.contains('a', 'Shop').click()
 | Page | `shop-page` |
 | Search | `shop-search` |
 | Category | `shop-category` |
+| Brand | `shop-manufacturer` |
 | Sort | `shop-sort` |
+| Min / max price | `shop-min-price`, `shop-max-price` |
+| Featured / in stock / on sale | `shop-featured`, `shop-in-stock`, `shop-on-sale` |
+| Clear filters | `shop-clear-filters` |
+| Result count | `shop-result-count` |
 | Product grid | `shop-product-grid` |
 | Product card | `product-card-{id}` (+ `data-product-slug`) |
 

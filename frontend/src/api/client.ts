@@ -135,6 +135,8 @@ export const api = {
   },
   getProduct: (idOrSlug: string) => request<Product>(`/products/${idOrSlug}`),
   getCategories: () => request<Category[]>('/categories?tree=true'),
+  getManufacturers: () =>
+    request<{ id: number; name: string; slug: string }[]>('/manufacturers'),
   login: (email: string, password: string) =>
     request<{ token: string; customer: { id: number; email: string; firstName: string; lastName: string } }>(
       '/auth/login',

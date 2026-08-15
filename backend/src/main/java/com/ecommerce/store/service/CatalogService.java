@@ -118,7 +118,8 @@ public class CatalogService {
     @Transactional(readOnly = true)
     public Map<String, Object> listProducts(
             int page, int limit, String search, String category, String manufacturer,
-            Boolean featured, String sort, java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice) {
+            Boolean featured, Boolean inStock, Boolean onSale, String sort,
+            java.math.BigDecimal minPrice, java.math.BigDecimal maxPrice) {
 
         Specification<Product> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
@@ -133,6 +134,14 @@ public class CatalogService {
             }
             if (Boolean.TRUE.equals(featured)) {
                 predicates.add(cb.isTrue(root.get("featured")));
+            }
+            if (Boolean.TRUE.equals(inStock)) {
+                predicates.add(cb.equal(root.get("stockStatus"), StockStatus.IN_STOCK));
+                predicates.add(cb.greaterThan(root.get("quantity"), 0));
+            }
+            if (Boolean.TRUE.equals(onSale)) {
+                predicates.add(cb.isNotNull(root.get("compareAtPrice")));
+                predicates.add(cb.greaterThan(root.get("compareAtPrice"), root.get("price")));
             }
             if (minPrice != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("price"), minPrice));
@@ -161,8 +170,12 @@ public class CatalogService {
         Sort sortObj = switch (sort == null ? "newest" : sort) {
             case "price_asc" -> Sort.by("price").ascending();
             case "price_desc" -> Sort.by("price").descending();
-            case "name" -> Sort.by("name").ascending();
+            case "name", "name_asc" -> Sort.by("name").ascending();
+            case "name_desc" -> Sort.by("name").descending();
+            case "oldest" -> Sort.by("createdAt").ascending();
             case "featured" -> Sort.by("featured").descending().and(Sort.by("createdAt").descending());
+            case "popular", "views" -> Sort.by("viewCount").descending().and(Sort.by("createdAt").descending());
+            case "catalog", "sort_order" -> Sort.by("sortOrder").ascending().and(Sort.by("name").ascending());
             default -> Sort.by("createdAt").descending();
         };
 
