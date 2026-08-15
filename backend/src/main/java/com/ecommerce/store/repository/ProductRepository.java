@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
     Optional<Product> findBySlugAndActiveTrue(String slug);
+    Optional<Product> findBySlug(String slug);
     Optional<Product> findByIdAndActiveTrue(Long id);
     Optional<Product> findBySku(String sku);
 

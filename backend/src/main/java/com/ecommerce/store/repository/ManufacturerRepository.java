@@ -8,5 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ManufacturerRepository extends JpaRepository<Manufacturer, Long> {
     List<Manufacturer> findByActiveTrueOrderBySortOrderAscNameAsc();
     Optional<Manufacturer> findBySlugAndActiveTrue(String slug);
+    Optional<Manufacturer> findBySlug(String slug);
     Optional<Manufacturer> findByIdAndActiveTrue(Long id);
 }
