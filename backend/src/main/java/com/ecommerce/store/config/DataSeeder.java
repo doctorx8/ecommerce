@@ -23,9 +23,11 @@ public class DataSeeder {
             ProductRepository productRepository,
             CouponRepository couponRepository,
             SettingRepository settingRepository,
-            PasswordEncoder passwordEncoder) {
+            PasswordEncoder passwordEncoder,
+            CatalogNavBootstrap catalogNavBootstrap) {
         return args -> {
             upsertSetting(settingRepository, "store_name", "Karwan");
+            catalogNavBootstrap.ensureElectronicsNav();
 
             if (adminUserRepository.count() > 0) {
                 return;
@@ -66,25 +68,32 @@ public class DataSeeder {
             manufacturerRepository.save(apple);
             manufacturerRepository.save(sony);
 
-            Category electronics = category("Electronics", "electronics", "Phones, laptops, and gadgets", null, 1);
-            categoryRepository.save(electronics);
-            Category phones = category("Phones", "phones", "Smartphones and accessories", electronics, 1);
-            Category laptops = category("Laptops", "laptops", "Notebooks and ultrabooks", electronics, 2);
-            Category audio = category("Audio", "audio", "Headphones, earbuds, and speakers", electronics, 3);
-            Category tablets = category("Tablets", "tablets", "iPad and Android tablets", electronics, 4);
-            Category accessories = category("Accessories", "accessories", "Cases, chargers, and cables", electronics, 5);
+            Category notebook = category("Notebook", "notebook", "Laptops and ultrabooks", null, 1);
+            Category pcAcc = category("PC & Accessories", "pc-accessories", "Desktops, monitors, and PC gear", null, 2);
+            Category gaming = category("Gaming", "gaming", "Consoles, gaming PCs, and gear", null, 3);
+            Category phoneTablet = category("Smartphone & Tablet", "smartphone-tablet", "Phones and tablets", null, 4);
+            Category tvAudio = category("TV & Audio", "tv-audio", "TVs, headphones, and speakers", null, 5);
+            Category smartHome = category("Smart Home", "smart-home", "Connected home devices", null, 6);
+            categoryRepository.save(notebook);
+            categoryRepository.save(pcAcc);
+            categoryRepository.save(gaming);
+            categoryRepository.save(phoneTablet);
+            categoryRepository.save(tvAudio);
+            categoryRepository.save(smartHome);
+
+            Category phones = category("Phones", "phones", "Smartphones", phoneTablet, 1);
+            Category tablets = category("Tablets", "tablets", "Tablets", phoneTablet, 2);
+            Category audio = category("Audio", "audio", "Headphones and speakers", tvAudio, 1);
             categoryRepository.save(phones);
-            categoryRepository.save(laptops);
-            categoryRepository.save(audio);
             categoryRepository.save(tablets);
-            categoryRepository.save(accessories);
+            categoryRepository.save(audio);
 
             Product iphone = product("iPhone 15", "iphone-15", "IPHONE-15-128", "A3090",
                     "Latest Apple smartphone",
                     "The iPhone 15 features a durable design, advanced camera system, and all-day battery life.",
                     new BigDecimal("799"), new BigDecimal("899"), 50, true, apple);
             iphone.getCategories().add(phones);
-            iphone.getCategories().add(electronics);
+            iphone.getCategories().add(phoneTablet);
             addImage(iphone, "/images/iphone-15.jpg", "iPhone 15");
             ProductOption color = new ProductOption();
             color.setProduct(iphone);
@@ -103,8 +112,7 @@ public class DataSeeder {
                     "Thin, fast, and quiet laptop",
                     "MacBook Air with M3 chip delivers exceptional performance in a fanless design.",
                     new BigDecimal("1099"), new BigDecimal("1199"), 25, true, apple);
-            macbook.getCategories().add(laptops);
-            macbook.getCategories().add(electronics);
+            macbook.getCategories().add(notebook);
             addImage(macbook, "/images/macbook-air.jpg", "MacBook Air");
             productRepository.save(macbook);
 
@@ -112,7 +120,7 @@ public class DataSeeder {
                     "Industry-leading noise canceling headphones",
                     "Premium wireless headphones with exceptional noise cancellation and sound quality.",
                     new BigDecimal("348"), null, 100, false, sony);
-            headphones.getCategories().add(electronics);
+            headphones.getCategories().add(tvAudio);
             headphones.getCategories().add(audio);
             addImage(headphones, "/images/sony-headphones.jpg", "Sony Headphones");
             productRepository.save(headphones);

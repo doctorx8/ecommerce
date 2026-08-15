@@ -41,12 +41,18 @@ cy.contains('a', 'Shop').click()
 | Element | data-testid / id | Link text |
 |---------|------------------|-----------|
 | Brand / home | `nav-brand` | KARWAN |
-| Shop | `nav-shop` | Shop |
+| Header search | `nav-search` / `header-search` | — |
+| Search submit | `nav-search-submit` | Search |
+| Shop all | `nav-shop` | Shop all |
 | Cart | `nav-cart` | Cart |
 | Cart badge | `cart-count` | — |
 | Sign in | `nav-signin` | Sign in |
 | Account | `nav-account` | Account |
-| Sign out | `nav-signout` | Sign out |
+| Wishlist | `nav-wishlist` | Wishlist |
+| Menu toggle | `nav-menu-toggle` | All |
+| Category bar | `category-nav` / `cat-nav-links` | Apple, Notebook, … |
+| Offers / Outlet | `cat-nav-offers`, `cat-nav-outlet` | Offers, Outlet |
+| Mega menu | `all-categories-panel` | — |
 
 ## Home
 

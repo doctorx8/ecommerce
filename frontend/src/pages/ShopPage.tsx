@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { api, type Category, type Product } from '../api/client'
 import { ProductCard } from '../components/ProductCard'
 
@@ -17,21 +18,32 @@ const SORT_OPTIONS = [
 ] as const
 
 export function ShopPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [total, setTotal] = useState(0)
   const [categories, setCategories] = useState<Category[]>([])
   const [manufacturers, setManufacturers] = useState<Manufacturer[]>([])
-  const [search, setSearch] = useState('')
-  const [category, setCategory] = useState('')
-  const [manufacturer, setManufacturer] = useState('')
-  const [sort, setSort] = useState('newest')
-  const [minPrice, setMinPrice] = useState('')
-  const [maxPrice, setMaxPrice] = useState('')
-  const [featuredOnly, setFeaturedOnly] = useState(false)
-  const [inStockOnly, setInStockOnly] = useState(false)
-  const [onSaleOnly, setOnSaleOnly] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+
+  const search = searchParams.get('q') || searchParams.get('search') || ''
+  const category = searchParams.get('category') || ''
+  const manufacturer = searchParams.get('manufacturer') || ''
+  const sort = searchParams.get('sort') || 'newest'
+  const minPrice = searchParams.get('minPrice') || ''
+  const maxPrice = searchParams.get('maxPrice') || ''
+  const featuredOnly = searchParams.get('featured') === '1'
+  const inStockOnly = searchParams.get('inStock') === '1'
+  const onSaleOnly = searchParams.get('onSale') === '1'
+
+  function setParam(key: string, value: string | boolean) {
+    const next = new URLSearchParams(searchParams)
+    if (value === '' || value === false) next.delete(key)
+    else if (value === true) next.set(key, '1')
+    else next.set(key, value)
+    if (key === 'q') next.delete('search')
+    setSearchParams(next, { replace: true })
+  }
 
   useEffect(() => {
     api.getCategories().then(setCategories).catch(() => setCategories([]))
@@ -89,24 +101,25 @@ export function ShopPage() {
     sort !== 'newest'
 
   function clearFilters() {
-    setSearch('')
-    setCategory('')
-    setManufacturer('')
-    setSort('newest')
-    setMinPrice('')
-    setMaxPrice('')
-    setFeaturedOnly(false)
-    setInStockOnly(false)
-    setOnSaleOnly(false)
+    setSearchParams({}, { replace: true })
   }
+
+  const title =
+    manufacturer === 'apple'
+      ? 'Apple'
+      : category
+        ? flatCategories.find((c) => c.slug === category)?.name || 'Shop'
+        : onSaleOnly
+          ? 'Offers'
+          : 'Shop'
 
   return (
     <div className="page" data-testid="shop-page" id="shop-page">
       <div className="container">
         <h1 className="page-title" data-testid="shop-title">
-          Shop
+          {title}
         </h1>
-        <p className="muted">Browse phones, laptops, audio, and the full Karwan electronics catalog.</p>
+        <p className="muted">Browse phones, notebooks, gaming, audio, and the full Karwan electronics catalog.</p>
 
         <div className="toolbar shop-toolbar" data-testid="shop-toolbar" id="shop-toolbar">
           <input
@@ -116,7 +129,7 @@ export function ShopPage() {
             placeholder="Search products, SKU…"
             aria-label="Search products"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => setParam('q', e.target.value)}
           />
           <select
             id="shop-category"
@@ -124,7 +137,7 @@ export function ShopPage() {
             data-testid="shop-category"
             aria-label="Filter by category"
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={(e) => setParam('category', e.target.value)}
           >
             <option value="">All categories</option>
             {flatCategories.map((c) => (
@@ -139,7 +152,7 @@ export function ShopPage() {
             data-testid="shop-manufacturer"
             aria-label="Filter by brand"
             value={manufacturer}
-            onChange={(e) => setManufacturer(e.target.value)}
+            onChange={(e) => setParam('manufacturer', e.target.value)}
           >
             <option value="">All brands</option>
             {manufacturers.map((m) => (
@@ -154,7 +167,7 @@ export function ShopPage() {
             data-testid="shop-sort"
             aria-label="Sort products"
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) => setParam('sort', e.target.value === 'newest' ? '' : e.target.value)}
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -173,7 +186,7 @@ export function ShopPage() {
             placeholder="Min $"
             aria-label="Minimum price"
             value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
+            onChange={(e) => setParam('minPrice', e.target.value)}
           />
           <input
             id="shop-max-price"
@@ -186,7 +199,7 @@ export function ShopPage() {
             placeholder="Max $"
             aria-label="Maximum price"
             value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
+            onChange={(e) => setParam('maxPrice', e.target.value)}
           />
         </div>
 
@@ -198,7 +211,7 @@ export function ShopPage() {
               type="checkbox"
               data-testid="shop-featured"
               checked={featuredOnly}
-              onChange={(e) => setFeaturedOnly(e.target.checked)}
+              onChange={(e) => setParam('featured', e.target.checked)}
             />
             Featured only
           </label>
@@ -209,7 +222,7 @@ export function ShopPage() {
               type="checkbox"
               data-testid="shop-in-stock"
               checked={inStockOnly}
-              onChange={(e) => setInStockOnly(e.target.checked)}
+              onChange={(e) => setParam('inStock', e.target.checked)}
             />
             In stock
           </label>
@@ -220,7 +233,7 @@ export function ShopPage() {
               type="checkbox"
               data-testid="shop-on-sale"
               checked={onSaleOnly}
-              onChange={(e) => setOnSaleOnly(e.target.checked)}
+              onChange={(e) => setParam('onSale', e.target.checked)}
             />
             On sale
           </label>
