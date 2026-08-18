@@ -159,6 +159,8 @@ cy.contains('a', 'Shop').click()
 | Login email/password | `admin-email`, `admin-password` | — |
 | Login submit | `admin-login-submit` | Sign in |
 | Nav | `admin-nav-overview`, `admin-nav-inventory`, `admin-nav-orders`, `admin-nav-customers`, `admin-nav-coupons` | Overview, Inventory, … |
+| Visitor stats | `admin-visitor-stats`, `admin-stat-visitors-today`, `admin-stat-pageviews-today`, `admin-stat-visitors-total` | — |
+| Visitors chart | `admin-visitors-chart` | — |
 | Sign out | `admin-signout` | Sign out |
 | Inventory qty | `admin-qty-{id}` | — |
 | Stock status | `admin-stock-status-{id}` | — |

@@ -242,6 +242,14 @@ export const api = {
     request(`/wishlist/${productId}`, { method: 'POST' }),
   removeWishlist: (productId: number) =>
     request<void>(`/wishlist/${productId}`, { method: 'DELETE' }),
+  trackVisit: (path: string) =>
+    request<{ pageViewsToday: number; uniqueVisitorsToday: number; newVisitor: boolean }>(
+      '/analytics/visit',
+      {
+        method: 'POST',
+        body: JSON.stringify({ visitorKey: sessionId(), path }),
+      },
+    ),
 }
 
 export function money(value: number | string | undefined | null): string {

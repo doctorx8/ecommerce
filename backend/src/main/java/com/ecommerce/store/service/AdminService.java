@@ -30,6 +30,7 @@ public class AdminService {
     private final OrderStatusRules orderStatusRules;
     private final EmailService emailService;
     private final AuditService auditService;
+    private final VisitorService visitorService;
 
     public AdminService(
             ProductRepository productRepository,
@@ -40,7 +41,8 @@ public class AdminService {
             OrderService orderService,
             OrderStatusRules orderStatusRules,
             EmailService emailService,
-            AuditService auditService) {
+            AuditService auditService,
+            VisitorService visitorService) {
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
         this.customerRepository = customerRepository;
@@ -50,6 +52,7 @@ public class AdminService {
         this.orderStatusRules = orderStatusRules;
         this.emailService = emailService;
         this.auditService = auditService;
+        this.visitorService = visitorService;
     }
 
     @Transactional(readOnly = true)
@@ -95,6 +98,7 @@ public class AdminService {
         map.put("lowStockProducts", lowStockProducts);
         map.put("categories", categoryRepository.count());
         map.put("salesOverTime", salesOverTime());
+        map.putAll(visitorService.summary());
         return map;
     }
 

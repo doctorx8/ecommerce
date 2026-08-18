@@ -64,7 +64,7 @@ Open **http://localhost:8080/admin** (or `/admin` on your deployed host).
 | Customer | customer@store.local  | password123  |
 | Admin    | admin@store.local     | password123  |
 
-Admin features: store overview, inventory/stock edits, order & payment status, customers, coupons, review moderation, audit log, sales chart.
+Admin features: store overview, website visitor counter, inventory/stock edits, order & payment status, customers, coupons, review moderation, audit log, sales chart.
 
 Also includes: mock checkout payment, SMTP emails (Mailhog locally on `:8025`), shipping/tax quote, wishlist, moderated reviews, password reset.
 

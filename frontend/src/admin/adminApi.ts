@@ -95,6 +95,11 @@ export type AdminOverview = {
   recentOrders: AdminOrder[]
   lowStockProducts: AdminProduct[]
   salesOverTime?: { date: string; revenue: number | string; orders: number | string }[]
+  visitorsToday?: number
+  pageViewsToday?: number
+  visitorsTotal?: number
+  pageViewsTotal?: number
+  visitorsOverTime?: { date: string; visitors: number | string; pageViews: number | string }[]
 }
 
 export const ORDER_STATUSES = [

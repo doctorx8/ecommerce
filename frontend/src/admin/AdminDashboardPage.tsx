@@ -17,6 +17,9 @@ export function AdminDashboardPage() {
   if (!data) return <div className="admin-muted">Loading overview…</div>
 
   const stats = [
+    { label: 'Visitors today', value: String(data.visitorsToday ?? 0), testId: 'admin-stat-visitors-today' },
+    { label: 'Page views today', value: String(data.pageViewsToday ?? 0), testId: 'admin-stat-pageviews-today' },
+    { label: 'Visitors total', value: String(data.visitorsTotal ?? 0), testId: 'admin-stat-visitors-total' },
     { label: 'Revenue', value: money(data.revenue) },
     { label: 'Orders', value: String(data.orders) },
     { label: 'Products', value: `${data.activeProducts}/${data.products}` },
@@ -26,47 +29,85 @@ export function AdminDashboardPage() {
   ]
 
   return (
-    <div className="admin-page">
+    <div className="admin-page" data-testid="admin-overview" id="admin-overview">
       <header className="admin-page-head">
         <div>
           <h1>Overview</h1>
-          <p className="admin-muted">Store health, stock alerts, and recent packages.</p>
+          <p className="admin-muted">Store health, website visitors, stock alerts, and recent packages.</p>
         </div>
       </header>
 
-      <div className="admin-stat-grid">
+      <div className="admin-stat-grid" data-testid="admin-visitor-stats" id="admin-visitor-stats">
         {stats.map((s) => (
-          <div key={s.label} className="admin-stat">
+          <div key={s.label} className="admin-stat" data-testid={s.testId}>
             <span>{s.label}</span>
             <strong>{s.value}</strong>
           </div>
         ))}
       </div>
 
-      <section className="admin-panel" data-testid="admin-sales-chart" id="admin-sales-chart">
-        <div className="admin-panel-head">
-          <h2>Sales (14 days)</h2>
-        </div>
-        {(data.salesOverTime?.length ?? 0) === 0 ? (
-          <p className="admin-muted">No sales in the last 14 days.</p>
-        ) : (
-          <div className="admin-chart">
-            {data.salesOverTime!.map((point) => {
-              const max = Math.max(
-                ...data.salesOverTime!.map((p) => Number(p.revenue) || 0),
-                1,
-              )
-              const height = Math.max((Number(point.revenue) / max) * 120, 4)
-              return (
-                <div key={point.date} className="admin-chart-bar" title={`${point.date}: ${money(point.revenue)}`}>
-                  <div className="admin-chart-fill" style={{ height }} data-testid={`sales-bar-${point.date}`} />
-                  <span>{String(point.date).slice(5)}</span>
-                </div>
-              )
-            })}
+      <div className="admin-split">
+        <section className="admin-panel" data-testid="admin-sales-chart" id="admin-sales-chart">
+          <div className="admin-panel-head">
+            <h2>Sales (14 days)</h2>
           </div>
-        )}
-      </section>
+          {(data.salesOverTime?.length ?? 0) === 0 ? (
+            <p className="admin-muted">No sales in the last 14 days.</p>
+          ) : (
+            <div className="admin-chart">
+              {data.salesOverTime!.map((point) => {
+                const max = Math.max(
+                  ...data.salesOverTime!.map((p) => Number(p.revenue) || 0),
+                  1,
+                )
+                const height = Math.max((Number(point.revenue) / max) * 120, 4)
+                return (
+                  <div key={point.date} className="admin-chart-bar" title={`${point.date}: ${money(point.revenue)}`}>
+                    <div className="admin-chart-fill" style={{ height }} data-testid={`sales-bar-${point.date}`} />
+                    <span>{String(point.date).slice(5)}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="admin-panel" data-testid="admin-visitors-chart" id="admin-visitors-chart">
+          <div className="admin-panel-head">
+            <h2>Website visitors (14 days)</h2>
+          </div>
+          {(data.visitorsOverTime?.length ?? 0) === 0 ? (
+            <p className="admin-muted">No visitor data yet. Browse the storefront to start counting.</p>
+          ) : (
+            <div className="admin-chart">
+              {data.visitorsOverTime!.map((point) => {
+                const max = Math.max(
+                  ...data.visitorsOverTime!.map((p) => Number(p.visitors) || 0),
+                  1,
+                )
+                const height = Math.max((Number(point.visitors) / max) * 120, 4)
+                return (
+                  <div
+                    key={point.date}
+                    className="admin-chart-bar"
+                    title={`${point.date}: ${point.visitors} visitors / ${point.pageViews} views`}
+                  >
+                    <div
+                      className="admin-chart-fill admin-chart-fill-visitors"
+                      style={{ height }}
+                      data-testid={`visitors-bar-${point.date}`}
+                    />
+                    <span>{String(point.date).slice(5)}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          <p className="admin-muted" style={{ marginTop: '0.75rem' }}>
+            Unique visitors use the browser session key. Page views count each storefront route visit.
+          </p>
+        </section>
+      </div>
 
       <div className="admin-split">
         <section className="admin-panel">

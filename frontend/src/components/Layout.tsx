@@ -107,6 +107,15 @@ export function Layout() {
     api.getManufacturers().then(setBrands).catch(() => setBrands([]))
   }, [])
 
+  useEffect(() => {
+    if (location.pathname.startsWith('/admin')) return
+    const lockKey = `karwan_pv:${location.pathname}`
+    const last = Number(sessionStorage.getItem(lockKey) || 0)
+    if (Date.now() - last < 2500) return
+    sessionStorage.setItem(lockKey, String(Date.now()))
+    api.trackVisit(location.pathname).catch(() => {})
+  }, [location.pathname])
+
   function onSearch(e: FormEvent) {
     e.preventDefault()
     const q = query.trim()

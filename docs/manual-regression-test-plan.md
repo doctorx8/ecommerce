@@ -145,7 +145,7 @@ Login: `/admin` → `admin@store.local` / `password123`
 |----|------|----------|--------|-------|
 | ADM-01 | Admin login | Dashboard | ☐ | |
 | ADM-02 | Customer JWT cannot open `/admin` APIs | 401/403 | ☐ | |
-| ADM-03 | Overview: counts + sales chart (14d) | Renders; no crash | ☐ | |
+| ADM-03 | Overview: counts + sales chart (14d) + visitor counters | Renders; visitors today/total update after browsing storefront | ☐ | |
 | ADM-04 | Inventory: search / low stock | List loads | ☐ | |
 | ADM-05 | Patch inventory qty / stock status | Product updates; storefront reflects | ☐ | |
 | ADM-06 | Orders: filter + open detail | Shipping, payment, lines visible | ☐ | |
